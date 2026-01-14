@@ -54,8 +54,12 @@ function App() {
         <Route path="/contact" element={<ContactPage isDark={isDark} />} />
       </Routes>
       
-      {/* แสดง Footer เฉพาะหน้าที่ไม่ใช่หน้าแรกและหน้า Services (มี Footer อยู่ใน scroll container แล้ว) */}
-      {!isHomePage && location.pathname !== '/services' && <Footer />}
+      {/* แสดง Footer - z-0 เพื่อให้ modal ที่มี z-50 ทับได้ */}
+      {!isHomePage && location.pathname !== '/services' && (
+        <div className="relative z-0">
+          <Footer />
+        </div>
+      )}
     </div>
   );
 }
