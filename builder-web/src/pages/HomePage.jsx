@@ -1,10 +1,306 @@
-import React, { useRef, useState, Suspense, useCallback } from 'react';
+import React, { useRef, useState, Suspense, useCallback, useEffect, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Environment, Html } from '@react-three/drei';
-import { Phone, Mail, X, ChevronRight, Home, Building, Waves, Hotel, MessageCircle, Sun, Moon } from 'lucide-react';
+import { Environment } from '@react-three/drei';
+import { Phone, Mail, X, ChevronRight, Home, Building, Waves, Hotel, MessageCircle } from 'lucide-react';
 import * as THREE from 'three';
 
-// --- Tree Component ---
+const Moon = ({ isDark }) => {
+  const moonRef = useRef();
+  const glowRef = useRef();
+  const softGlowRef = useRef();
+  const atmosphereRef = useRef();
+  const groupRef = useRef();
+
+  // Animation state
+  const [currentMode, setCurrentMode] = useState(isDark);
+  const animationProgress = useRef(0);
+  const targetY = useRef(isDark ? 5 : -10);
+
+  // Shadow spots and stars data
+  const details = useMemo(() => {
+    const shadows = Array.from({ length: 3 }, (_, i) => ({
+      id: i,
+      x: (Math.random() - 0.5) * 1.8,
+      y: (Math.random() - 0.5) * 1.8,
+      z: Math.random() * 0.3 + 0.8,
+      radius: Math.random() * 0.4 + 0.3,
+    }));
+
+    const stars = Array.from({ length: 5 }, (_, i) => ({
+      id: i,
+      x: (Math.random() - 0.5) * 8 + (i < 3 ? -4 : 4),
+      y: (Math.random() - 0.5) * 4,
+      z: (Math.random() - 0.5) * 2,
+      size: Math.random() * 0.08 + 0.06,
+    }));
+
+    return { shadows, stars };
+  }, []);
+
+  // Handle mode change
+  useEffect(() => {
+    if (isDark !== currentMode) {
+      // First, move current celestial body down
+      targetY.current = -10;
+      animationProgress.current = 0;
+
+      // Then after delay, switch mode and bring new one up
+      const timer = setTimeout(() => {
+        setCurrentMode(isDark);
+        targetY.current = 5;
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isDark, currentMode]);
+
+  useFrame((_, delta) => {
+    const time = Date.now() * 0.001;
+
+    // Smooth Y position animation
+    if (groupRef.current) {
+      const currentY = groupRef.current.position.y;
+      const diff = targetY.current - currentY;
+
+      if (Math.abs(diff) > 0.01) {
+        // Ease out animation
+        const speed = 3;
+        groupRef.current.position.y += diff * speed * delta;
+      } else {
+        groupRef.current.position.y = targetY.current;
+      }
+    }
+
+    if (moonRef.current) {
+      moonRef.current.rotation.y += delta * 0.006;
+    }
+
+    // Gentle breathing glow
+    if (glowRef.current) {
+      const pulse = Math.sin(time * 0.4) * 0.1 + 0.9;
+      glowRef.current.material.opacity = 0.35 * pulse;
+    }
+
+    if (softGlowRef.current) {
+      const softPulse = Math.sin(time * 0.5) * 0.08 + 0.92;
+      softGlowRef.current.material.opacity = 0.28 * softPulse;
+    }
+
+    if (atmosphereRef.current) {
+      const atmPulse = Math.sin(time * 0.3) * 0.12 + 0.88;
+      atmosphereRef.current.material.opacity = 0.2 * atmPulse;
+    }
+  });
+
+  const moonRadius = 2.6;
+
+  // Sun configuration for light mode
+  if (!currentMode) {
+    return (
+      <group ref={groupRef} position={[9, 5, -10]}>
+        {/* Outer sun rays glow */}
+        <mesh>
+          <sphereGeometry args={[moonRadius * 1.35, 64, 64]} />
+          <meshBasicMaterial
+            color="#FFD700"
+            transparent
+            opacity={0.15}
+            side={THREE.BackSide}
+            blending={THREE.AdditiveBlending}
+          />
+        </mesh>
+
+        {/* Middle glow */}
+        <mesh>
+          <sphereGeometry args={[moonRadius * 1.2, 64, 64]} />
+          <meshBasicMaterial
+            color="#FFA500"
+            transparent
+            opacity={0.25}
+            side={THREE.BackSide}
+            blending={THREE.AdditiveBlending}
+          />
+        </mesh>
+
+        {/* Inner glow */}
+        <mesh>
+          <sphereGeometry args={[moonRadius * 1.1, 64, 64]} />
+          <meshBasicMaterial
+            color="#FFFF00"
+            transparent
+            opacity={0.35}
+            side={THREE.BackSide}
+            blending={THREE.AdditiveBlending}
+          />
+        </mesh>
+
+        {/* Main Sun body */}
+        <group ref={moonRef}>
+          <mesh castShadow>
+            <sphereGeometry args={[moonRadius, 128, 128]} />
+            <meshPhysicalMaterial
+              color="#FDB813"
+              emissive="#FF8C00"
+              emissiveIntensity={2}
+              roughness={0.7}
+              metalness={0.01}
+              clearcoat={0.3}
+              clearcoatRoughness={0.4}
+            />
+          </mesh>
+        </group>
+
+        {/* Sun rays */}
+        {Array.from({ length: 12 }).map((_, i) => {
+          const angle = (i / 12) * Math.PI * 2;
+          const distance = moonRadius * 1.5;
+          const x = Math.cos(angle) * distance;
+          const y = Math.sin(angle) * distance;
+
+          return (
+            <mesh
+              key={`ray-${i}`}
+              position={[x, y, 0]}
+              rotation={[0, 0, angle]}
+            >
+              <coneGeometry args={[0.15, 0.8, 8]} />
+              <meshBasicMaterial
+                color="#FFD700"
+                transparent
+                opacity={0.6}
+              />
+            </mesh>
+          );
+        })}
+
+        {/* Sun lights */}
+        <pointLight
+          position={[0, 20, 0]}
+          intensity={6}
+          distance={40}
+          color="#FFA500"
+          decay={2}
+        />
+
+        <pointLight
+          position={[-1, 1, 1]}
+          intensity={3}
+          distance={25}
+          color="#FFFF00"
+          decay={2}
+        />
+      </group>
+    );
+  }
+
+  // Moon configuration for dark mode
+
+  return (
+    <group ref={groupRef} position={[10, 5, -15]}>
+      {/* Atmospheric glow - Soft blue outer layer */}
+      <mesh ref={atmosphereRef}>
+        <sphereGeometry args={[moonRadius * 1.18, 64, 64]} />
+        <meshBasicMaterial
+          color="#7BA8D9"
+          transparent
+          opacity={0.2}
+          side={THREE.BackSide}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
+      {/* Soft outer glow */}
+      <mesh ref={softGlowRef}>
+        <sphereGeometry args={[moonRadius * 1.1, 64, 64]} />
+        <meshBasicMaterial
+          color="#A3C5E3"
+          transparent
+          opacity={0.28}
+          side={THREE.BackSide}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
+      {/* Inner glow */}
+      <mesh ref={glowRef}>
+        <sphereGeometry args={[moonRadius * 1.05, 64, 64]} />
+        <meshBasicMaterial
+          color="#C8D9EB"
+          transparent
+          opacity={0.35}
+          side={THREE.BackSide}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
+      {/* Main moon body */}
+      <group ref={moonRef}>
+        <mesh castShadow receiveShadow>
+          <sphereGeometry args={[moonRadius, 128, 128]} />
+          <meshPhysicalMaterial
+            color="#E8E8E8"
+            emissive="#D8D8D8"
+            emissiveIntensity={0.6}
+            roughness={0.88}
+            metalness={0.01}
+            clearcoat={0.1}
+            clearcoatRoughness={0.7}
+          />
+        </mesh>
+
+        {/* Subtle shadow spots */}
+        {details.shadows.map((shadow) => (
+          <mesh
+            key={shadow.id}
+            position={[shadow.x, shadow.y, shadow.z]}
+          >
+            <circleGeometry args={[shadow.radius, 32]} />
+            <meshStandardMaterial
+              color="#C0C0C0"
+              transparent
+              opacity={0.4}
+              roughness={0.95}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+        ))}
+      </group>
+
+      {/* Small stars around */}
+      {details.stars.map((star) => (
+        <mesh key={`star-${star.id}`} position={[star.x, star.y, star.z]}>
+          <sphereGeometry args={[star.size, 8, 8]} />
+          <meshBasicMaterial
+            color="#FFFFFF"
+            transparent
+            opacity={0.8}
+          />
+        </mesh>
+      ))}
+
+      {/* Moon lights - soft white/blue */}
+      <pointLight
+        position={[0, 0, 0]}
+        intensity={4.5}
+        distance={32}
+        color="#E8F0FF"
+        decay={2}
+      />
+
+      {/* Subtle blue rim light */}
+      <pointLight
+        position={[-2, 1, 2]}
+        intensity={2}
+        distance={18}
+        color="#A3C5E3"
+        decay={2}
+      />
+    </group>
+  );
+};
+
+
+// --- 🌳 Tree Component ---
 const Tree = ({ position, scale = 1 }) => {
   return (
     <group position={position} scale={scale}>
@@ -24,7 +320,7 @@ const Tree = ({ position, scale = 1 }) => {
   );
 };
 
-// --- Bush Component ---
+// --- 🌿 Bush Component ---
 const Bush = ({ position, scale = 1 }) => {
   return (
     <group position={position} scale={scale}>
@@ -40,114 +336,438 @@ const Bush = ({ position, scale = 1 }) => {
   );
 };
 
-// --- Hotspot Component ---
-const Hotspot = ({ position, label, onClick, color = "#ea580c", isActive = false }) => {
-  const [hovered, setHovered] = useState(false);
-  const meshRef = useRef();
-  const ringRef = useRef();
-
-  useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.scale.setScalar(1 + Math.sin(state.clock.elapsedTime * 3) * 0.15);
-    }
-    if (ringRef.current) {
-      ringRef.current.rotation.z = state.clock.elapsedTime * 0.5;
-    }
-  });
-
-  const handleClick = (e) => {
-    if (e) e.stopPropagation();
-    onClick();
-  };
-  
+// --- 💡 Street Lamp Component ---
+const StreetLamp = ({ position, rotation, isDark }) => {
   return (
-    <group position={position}>
-      <mesh
-        ref={meshRef}
-        onPointerOver={(e) => { e.stopPropagation(); setHovered(true); document.body.style.cursor = 'pointer'; }}
-        onPointerOut={(e) => { e.stopPropagation(); setHovered(false); document.body.style.cursor = 'grab'; }}
-        onClick={handleClick}
-      >
-        <sphereGeometry args={[0.25, 16, 16]} />
-        <meshStandardMaterial 
-          color={isActive ? "#fff" : (hovered ? "#fff" : color)}
-          emissive={color}
-          emissiveIntensity={isActive ? 1.5 : (hovered ? 1.2 : 0.6)}
-          transparent
-          opacity={0.9}
+    <group position={position} rotation={rotation}>
+      <mesh position={[0, 1.5, 0]} castShadow>
+        <cylinderGeometry args={[0.05, 0.06, 3, 8]} />
+        <meshStandardMaterial color="#263238" metalness={0.6} roughness={0.4} />
+      </mesh>
+      <mesh position={[0.4, 2.9, 0]} rotation={[0, 0, -Math.PI / 2]}>
+        <cylinderGeometry args={[0.04, 0.04, 0.8, 8]} />
+        <meshStandardMaterial color="#263238" metalness={0.6} roughness={0.4} />
+      </mesh>
+      <mesh position={[0.75, 2.85, 0]}>
+        <boxGeometry args={[0.3, 0.08, 0.2]} />
+        <meshStandardMaterial color="#263238" />
+      </mesh>
+      <mesh position={[0.75, 2.8, 0]}>
+        <boxGeometry args={[0.25, 0.02, 0.15]} />
+        <meshStandardMaterial
+          color={isDark ? "#FFF9C4" : "#FFFFFF"}
+          emissive={isDark ? "#FFF176" : "#000000"}
+          emissiveIntensity={isDark ? 2 : 0}
         />
       </mesh>
-      {/* Outer ring effect */}
-      <mesh ref={ringRef} scale={1.8}>
-        <ringGeometry args={[0.15, 0.2, 32]} />
-        <meshBasicMaterial color={color} transparent opacity={isActive ? 0.8 : 0.5} side={THREE.DoubleSide} />
-      </mesh>
-      <Html center distanceFactor={10}>
-        <div 
-          onClick={handleClick}
-          className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-300 cursor-pointer select-none
-          ${isActive ? 'bg-orange-600 text-white scale-110 shadow-xl' : 
-            (hovered ? 'bg-orange-600 text-white scale-110' : 'bg-white/95 text-slate-800 shadow-lg border border-slate-100 hover:bg-orange-100')}`}
-        >
-          {label}
-        </div>
-      </Html>
+      {isDark && (
+        <spotLight
+          position={[0.75, 2.7, 0]}
+          angle={0.6}
+          penumbra={0.5}
+          intensity={8}
+          distance={10}
+          color="#FFF9C4"
+          castShadow
+        />
+      )}
     </group>
   );
 };
 
-// --- Modern House with Mouse Rotation ---
-const ModernHouse = ({ onHotspotClick, activePanel, isDark }) => {
+// --- 💡 Garden Light Component ---
+const GardenLight = ({ position, isDark }) => {
+  return (
+    <group position={position}>
+      <mesh position={[0, 0.2, 0]} castShadow>
+        <boxGeometry args={[0.1, 0.4, 0.1]} />
+        <meshStandardMaterial color="#424242" />
+      </mesh>
+      <mesh position={[0, 0.35, 0]}>
+        <boxGeometry args={[0.08, 0.08, 0.08]} />
+        <meshStandardMaterial
+          color="#FFFFFF"
+          emissive={isDark ? "#FFD54F" : "#000000"}
+          emissiveIntensity={isDark ? 3 : 0}
+        />
+      </mesh>
+      {isDark && (
+        <pointLight position={[0, 0.4, 0]} intensity={1} distance={2} color="#FFD54F" />
+      )}
+    </group>
+  );
+};
+
+// --- 🚗 Car Component (แก้ไขแล้ว) ---
+const Car = ({ position, rotation, isDark }) => {
+  const carRef = useRef();
+  const wheelRef1 = useRef();
+  const wheelRef2 = useRef();
+  const wheelRef3 = useRef();
+  const wheelRef4 = useRef();
+  const wheelRefs = [wheelRef1, wheelRef2, wheelRef3, wheelRef4];
+
+  const [animationProgress, setAnimationProgress] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsAnimating(true);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useFrame((state, delta) => {
+    if (!carRef.current || !isAnimating || animationProgress >= 1) return;
+
+    const newProgress = Math.min(animationProgress + delta / 5, 1);
+    setAnimationProgress(newProgress);
+
+    const startZ = position[2];
+    const endZ = startZ + 12;
+    const currentZ = startZ + (endZ - startZ) * newProgress;
+    const wheelRotation = newProgress * Math.PI * 8;
+
+    carRef.current.position.set(position[0], position[1], currentZ);
+
+    wheelRefs.forEach((wheelRef, index) => {
+      if (wheelRef.current) {
+        if (index < 2) {
+          wheelRef.current.rotation.x = -wheelRotation;
+        } else {
+          wheelRef.current.rotation.x = wheelRotation;
+        }
+      }
+    });
+
+    if (newProgress > 0.5) {
+      const turnAmount = (newProgress - 0.5) * 0.5;
+      carRef.current.rotation.y = rotation[1] - turnAmount;
+    }
+
+    if (newProgress >= 1) {
+      setTimeout(() => {
+        setAnimationProgress(0);
+        setIsAnimating(false);
+        carRef.current.position.set(position[0], position[1], position[2]);
+        carRef.current.rotation.set(rotation[0], rotation[1], rotation[2]);
+
+        wheelRefs.forEach(wheelRef => {
+          if (wheelRef.current) {
+            wheelRef.current.rotation.set(0, 0, Math.PI / 2);
+          }
+        });
+
+        setTimeout(() => {
+          setIsAnimating(true);
+        }, 3000);
+      }, 5000);
+    }
+  });
+
+  const bodyColor = "#283593";
+  const roofColor = "#1A1A1A";
+  const glassColor = "#263238";
+  const accentColor = "#FFC107";
+  const wheelRadius = 0.2;
+  const wheelWidth = 0.14;
+  const chassisLevel = 0.22;
+
+  return (
+    <group ref={carRef} position={position} rotation={rotation}>
+      <group position={[0, chassisLevel, 0]}>
+        <mesh position={[0, -0.04, 0]} castShadow receiveShadow>
+          <boxGeometry args={[1.05, 0.08, 2.1]} />
+          <meshStandardMaterial color="#0A0A0A" roughness={0.9} />
+        </mesh>
+
+        <mesh position={[0, 0.18, 0]} castShadow receiveShadow>
+          <boxGeometry args={[1.0, 0.32, 2.05]} />
+          <meshStandardMaterial color={bodyColor} metalness={0.7} roughness={0.2} />
+        </mesh>
+
+        <mesh position={[0.5, 0.2, 0.65]} castShadow><boxGeometry args={[0.15, 0.22, 0.45]} /><meshStandardMaterial color={bodyColor} metalness={0.7} roughness={0.2} /></mesh>
+        <mesh position={[-0.5, 0.2, 0.65]} castShadow><boxGeometry args={[0.15, 0.22, 0.45]} /><meshStandardMaterial color={bodyColor} metalness={0.7} roughness={0.2} /></mesh>
+        <mesh position={[0.5, 0.2, -0.65]} castShadow><boxGeometry args={[0.15, 0.22, 0.45]} /><meshStandardMaterial color={bodyColor} metalness={0.7} roughness={0.2} /></mesh>
+        <mesh position={[-0.5, 0.2, -0.65]} castShadow><boxGeometry args={[0.15, 0.22, 0.45]} /><meshStandardMaterial color={bodyColor} metalness={0.7} roughness={0.2} /></mesh>
+
+        <mesh position={[0, 0.36, 0.7]} rotation={[-0.1, 0, 0]} castShadow>
+          <boxGeometry args={[0.95, 0.08, 0.8]} />
+          <meshStandardMaterial color={bodyColor} metalness={0.7} roughness={0.2} />
+        </mesh>
+
+        <mesh position={[0, 0.55, -0.1]} castShadow>
+          <boxGeometry args={[0.85, 0.38, 1.3]} />
+          <meshStandardMaterial color={glassColor} metalness={0.95} roughness={0.1} />
+        </mesh>
+
+        <mesh position={[0, 0.75, -0.15]} castShadow>
+          <boxGeometry args={[0.9, 0.04, 1.1]} />
+          <meshStandardMaterial color={roofColor} metalness={0.5} roughness={0.3} />
+        </mesh>
+
+        <mesh position={[0, 0.36, -0.7]} rotation={[0.1, 0, 0]} castShadow>
+          <boxGeometry args={[0.95, 0.08, 0.8]} />
+          <meshStandardMaterial color={bodyColor} metalness={0.7} roughness={0.2} />
+        </mesh>
+
+        <group>
+          <mesh position={[0.52, 0.45, 0.3]}><boxGeometry args={[0.04, 0.02, 0.08]} /><meshStandardMaterial color="#555" /></mesh>
+          <mesh position={[0.58, 0.42, 0.35]}><boxGeometry args={[0.12, 0.08, 0.06]} /><meshStandardMaterial color={bodyColor} /></mesh>
+          <mesh position={[-0.52, 0.45, 0.3]}><boxGeometry args={[0.04, 0.02, 0.08]} /><meshStandardMaterial color="#555" /></mesh>
+          <mesh position={[-0.58, 0.42, 0.35]}><boxGeometry args={[0.12, 0.08, 0.06]} /><meshStandardMaterial color={bodyColor} /></mesh>
+        </group>
+
+        <mesh position={[0.51, 0.32, 0]}><boxGeometry args={[0.02, 0.025, 0.12]} /><meshStandardMaterial color={roofColor} /></mesh>
+        <mesh position={[-0.51, 0.32, 0]}><boxGeometry args={[0.02, 0.025, 0.12]} /><meshStandardMaterial color={roofColor} /></mesh>
+
+        <mesh position={[0.2, 0.05, -1.05]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[0.035, 0.035, 0.1, 8]} /><meshStandardMaterial color="#333" /></mesh>
+        <mesh position={[-0.2, 0.05, -1.05]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[0.035, 0.035, 0.1, 8]} /><meshStandardMaterial color="#333" /></mesh>
+      </group>
+
+      {[[-0.48, 0.65], [0.48, 0.65], [-0.48, -0.65], [0.48, -0.65]].map((pos, i) => (
+        <group
+          key={i}
+          ref={wheelRefs[i]}
+          position={[pos[0], wheelRadius, pos[1]]}
+          rotation={[0, 0, Math.PI / 2]}
+        >
+          <mesh castShadow receiveShadow>
+            <cylinderGeometry args={[wheelRadius, wheelRadius, wheelWidth, 24]} />
+            <meshStandardMaterial color="#111111" roughness={0.8} />
+          </mesh>
+          <mesh position={[0, i % 2 === 0 ? -0.015 : 0.015, 0]}>
+            <cylinderGeometry args={[0.13, 0.13, wheelWidth + 0.01, 16]} />
+            <meshStandardMaterial color="#505050" metalness={0.8} />
+          </mesh>
+          <mesh position={[i % 2 === 0 ? -0.04 : 0.04, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
+            <boxGeometry args={[0.04, 0.1, 0.06]} />
+            <meshStandardMaterial color={accentColor} />
+          </mesh>
+        </group>
+      ))}
+
+      <group position={[0, chassisLevel, 0]}>
+        <group position={[0, 0.35, 1.05]}>
+          <mesh position={[0, 0, -0.02]}><boxGeometry args={[0.95, 0.2, 0.04]} /><meshStandardMaterial color="#0A0A0A" /></mesh>
+          {[-0.35, 0.35].map((x, i) => (
+            <group key={i} position={[x, 0, 0]}>
+              <mesh>
+                <boxGeometry args={[0.22, 0.12, 0.05]} />
+                <meshStandardMaterial
+                  color={isDark ? "#E0F7FA" : "#FFF"}
+                  emissive={isDark ? "#FFF" : "#CCC"}
+                  emissiveIntensity={isDark ? 5 : 0.5}
+                  toneMapped={false}
+                />
+              </mesh>
+              {isDark && isAnimating && (
+                <spotLight
+                  position={[0, 0, 0.1]}
+                  angle={0.5}
+                  penumbra={0.4}
+                  intensity={8}
+                  distance={10}
+                  color="#FFF"
+                />
+              )}
+            </group>
+          ))}
+        </group>
+
+        <group position={[0, 0.38, -1.05]}>
+          <mesh position={[0, 0, -0.02]}><boxGeometry args={[0.95, 0.15, 0.04]} /><meshStandardMaterial color="#0A0A0A" /></mesh>
+          <mesh>
+            <boxGeometry args={[0.9, 0.06, 0.05]} />
+            <meshStandardMaterial
+              color="#D32F2F"
+              emissive="#FF0000"
+              emissiveIntensity={isDark ? 2 : 0.8}
+              toneMapped={false}
+            />
+          </mesh>
+          <mesh position={[0.3, 0.05, 0.01]}>
+            <boxGeometry args={[0.15, 0.02, 0.05]} />
+            <meshStandardMaterial
+              color="#FFB300"
+              emissive={animationProgress > 0.45 ? "#FFB300" : "#000"}
+              emissiveIntensity={animationProgress > 0.45 ? (Math.sin(Date.now() * 0.01) * 0.5 + 1) : 0}
+            />
+          </mesh>
+          <mesh position={[-0.3, 0.05, 0.01]}>
+            <boxGeometry args={[0.15, 0.02, 0.05]} />
+            <meshStandardMaterial
+              color="#FFB300"
+              emissive={animationProgress > 0.45 ? "#FFB300" : "#000"}
+              emissiveIntensity={animationProgress > 0.45 ? (Math.sin(Date.now() * 0.01) * 0.5 + 1) : 0}
+            />
+          </mesh>
+        </group>
+
+        <group position={[0, 0.15, 1.06]} rotation={[0.05, 0, 0]}>
+          <mesh position={[0, 0.15, 0]}><boxGeometry args={[0.5, 0.12, 0.04]} /><meshStandardMaterial color="#111" /></mesh>
+          <mesh position={[0, -0.05, 0]}><boxGeometry args={[0.8, 0.08, 0.04]} /><meshStandardMaterial color="#111" /></mesh>
+          <mesh position={[0, -0.05, 0.03]}><boxGeometry args={[0.3, 0.06, 0.02]} /><meshStandardMaterial color="#333" /></mesh>
+        </group>
+      </group>
+
+      {isAnimating && animationProgress < 1 && (
+        <>
+          <group position={[-0.2, 0.05, -1.05]}>
+            <mesh>
+              <sphereGeometry args={[0.05 * (1 - animationProgress), 8, 8]} />
+              <meshStandardMaterial
+                color="#888888"
+                transparent
+                opacity={0.3}
+                emissive="#555555"
+                emissiveIntensity={0.5}
+              />
+            </mesh>
+          </group>
+          <group position={[0.2, 0.05, -1.05]}>
+            <mesh>
+              <sphereGeometry args={[0.05 * (1 - animationProgress), 8, 8]} />
+              <meshStandardMaterial
+                color="#888888"
+                transparent
+                opacity={0.3}
+                emissive="#555555"
+                emissiveIntensity={0.5}
+              />
+            </mesh>
+          </group>
+        </>
+      )}
+    </group>
+  );
+};
+
+// --- 🏊 Swimming Pool Component ---
+const SwimmingPool = ({ position, isDark }) => {
+  return (
+    <group position={position}>
+      <mesh position={[0, 0.05, 0]} receiveShadow>
+        <boxGeometry args={[2.6, 0.1, 5]} />
+        <meshStandardMaterial color="#8D6E63" roughness={0.8} />
+      </mesh>
+
+      <mesh position={[0, 0.06, 0]}>
+        <boxGeometry args={[2.0, 0.05, 4.0]} />
+        <meshStandardMaterial color="#006064" />
+      </mesh>
+
+      <mesh position={[0, 0.1, 0]}>
+        <boxGeometry args={[2.0, 0.05, 4.0]} />
+        <meshPhysicalMaterial color="#00E5FF" transparent opacity={0.7} metalness={0.1} roughness={0.05} transmission={0.6} thickness={1} />
+      </mesh>
+
+      {isDark && (
+        <>
+          <pointLight position={[0, 0.3, 1]} intensity={2} distance={3} color="#00E5FF" />
+          <pointLight position={[0, 0.3, -1]} intensity={2} distance={3} color="#00E5FF" />
+        </>
+      )}
+
+      <mesh position={[0, 0.11, -2.1]}><boxGeometry args={[2.4, 0.05, 0.2]} /><meshStandardMaterial color="#EEEEEE" /></mesh>
+      <mesh position={[0, 0.11, 2.1]}><boxGeometry args={[2.4, 0.05, 0.2]} /><meshStandardMaterial color="#EEEEEE" /></mesh>
+      <mesh position={[-1.1, 0.11, 0]}><boxGeometry args={[0.2, 0.05, 4.4]} /><meshStandardMaterial color="#EEEEEE" /></mesh>
+      <mesh position={[1.1, 0.11, 0]}><boxGeometry args={[0.2, 0.05, 4.4]} /><meshStandardMaterial color="#EEEEEE" /></mesh>
+
+      <group position={[-0.9, 0, -2.0]}>
+        <mesh position={[0, 0, 0]}><cylinderGeometry args={[0.03, 0.03, 0.6]} /><meshStandardMaterial color="#CFD8DC" metalness={0.8} /></mesh>
+        <mesh position={[0.3, 0, 0]}><cylinderGeometry args={[0.03, 0.03, 0.6]} /><meshStandardMaterial color="#CFD8DC" metalness={0.8} /></mesh>
+      </group>
+
+      <group position={[0.7, 0.18, -3.5]} rotation={[0, -0.6, 0]}>
+        <mesh position={[0, 0, 0.3]} castShadow>
+          <boxGeometry args={[0.6, 0.05, 1.2]} />
+          <meshStandardMaterial color="#5D4037" />
+        </mesh>
+
+        <mesh position={[-0.25, -0.08, 0.8]}><cylinderGeometry args={[0.02, 0.02, 0.15]} /><meshStandardMaterial color="#3E2723" /></mesh>
+        <mesh position={[0.25, -0.08, 0.8]}><cylinderGeometry args={[0.02, 0.02, 0.15]} /><meshStandardMaterial color="#3E2723" /></mesh>
+        <mesh position={[-0.25, -0.08, -0.2]}><cylinderGeometry args={[0.02, 0.02, 0.15]} /><meshStandardMaterial color="#3E2723" /></mesh>
+        <mesh position={[0.25, -0.08, -0.2]}><cylinderGeometry args={[0.02, 0.02, 0.15]} /><meshStandardMaterial color="#3E2723" /></mesh>
+
+        <group position={[0, 0, -0.3]} rotation={[0.5, 0, 0]}>
+          <mesh position={[0, 0.25, 0]} castShadow>
+            <boxGeometry args={[0.6, 0.05, 0.6]} />
+            <meshStandardMaterial color="#5D4037" />
+          </mesh>
+          <mesh position={[0, 0.28, 0]}>
+            <boxGeometry args={[0.5, 0.06, 0.55]} />
+            <meshStandardMaterial color="#FF5252" />
+          </mesh>
+        </group>
+
+        <mesh position={[0, 0.06, 0.3]}>
+          <boxGeometry args={[0.5, 0.06, 1.15]} />
+          <meshStandardMaterial color="#FF5252" />
+        </mesh>
+
+        <mesh position={[0, 0.45, -0.55]} rotation={[0.5, 0, 0]}>
+          <boxGeometry args={[0.35, 0.1, 0.2]} />
+          <meshStandardMaterial color="#FFFFFF" />
+        </mesh>
+      </group>
+    </group>
+  );
+};
+
+// --- 🏠 Modern House Component (แก้ไขแล้ว) ---
+const ModernHouse = ({ isDark }) => {
   const group = useRef();
   const { gl } = useThree();
-  
-  // Mouse drag state
+  const canvasRef = useRef(null);
+
   const isDragging = useRef(false);
   const previousMousePosition = useRef({ x: 0, y: 0 });
-  const targetRotation = useRef({ x: 0.25, y: 0.5 }); // Default to slightly tilted down view
-  const currentRotation = useRef({ x: 0.25, y: 0.5 });
-  const baseY = useRef(-1.2); // Store the base Y position for floating animation
+  const targetRotation = useRef({ x: 0.25, y: -0.5 });
+  const currentRotation = useRef({ x: 0.25, y: -0.5 });
+  const baseY = useRef(-1.2);
 
-  // Mouse event handlers
   const handlePointerDown = useCallback((e) => {
     e.stopPropagation();
     isDragging.current = true;
     previousMousePosition.current = { x: e.clientX, y: e.clientY };
-    gl.domElement.style.cursor = 'grabbing';
-  }, [gl]);
+    if (canvasRef.current) {
+      canvasRef.current.style.cursor = 'grabbing';
+    }
+  }, []);
 
   const handlePointerUp = useCallback(() => {
     isDragging.current = false;
-    gl.domElement.style.cursor = 'grab';
-  }, [gl]);
+    if (canvasRef.current) {
+      canvasRef.current.style.cursor = 'grab';
+    }
+  }, []);
 
   const handlePointerMove = useCallback((e) => {
     if (!isDragging.current) return;
-    
     const deltaX = e.clientX - previousMousePosition.current.x;
     const deltaY = e.clientY - previousMousePosition.current.y;
-    
     targetRotation.current.y += deltaX * 0.005;
     targetRotation.current.x += deltaY * 0.003;
-    
-    // Clamp vertical rotation - allow more range for straight-on view
-    // Min 0.0 (looking straight on) to Max 0.5 (looking down at angle)
     targetRotation.current.x = Math.max(0.0, Math.min(0.5, targetRotation.current.x));
-    
     previousMousePosition.current = { x: e.clientX, y: e.clientY };
   }, []);
 
-  // Add event listeners
-  React.useEffect(() => {
+  useEffect(() => {
     const canvas = gl.domElement;
-    canvas.style.cursor = 'grab';
-    
-    canvas.addEventListener('pointerdown', handlePointerDown);
-    window.addEventListener('pointerup', handlePointerUp);
-    window.addEventListener('pointermove', handlePointerMove);
-    
+    canvasRef.current = canvas;
+
+    if (canvas) {
+      canvas.style.cursor = 'grab';
+      canvas.addEventListener('pointerdown', handlePointerDown);
+      window.addEventListener('pointerup', handlePointerUp);
+      window.addEventListener('pointermove', handlePointerMove);
+    }
+
     return () => {
-      canvas.removeEventListener('pointerdown', handlePointerDown);
+      if (canvas) {
+        canvas.removeEventListener('pointerdown', handlePointerDown);
+      }
       window.removeEventListener('pointerup', handlePointerUp);
       window.removeEventListener('pointermove', handlePointerMove);
     };
@@ -155,121 +775,189 @@ const ModernHouse = ({ onHotspotClick, activePanel, isDark }) => {
 
   useFrame(() => {
     if (!group.current) return;
-    
-    // Smooth rotation interpolation
     currentRotation.current.x += (targetRotation.current.x - currentRotation.current.x) * 0.08;
     currentRotation.current.y += (targetRotation.current.y - currentRotation.current.y) * 0.08;
-    
     group.current.rotation.x = currentRotation.current.x;
     group.current.rotation.y = currentRotation.current.y;
-    
-    // Gentle floating animation - use baseY from ref to avoid overriding initial position
     group.current.position.y = baseY.current + Math.sin(Date.now() * 0.001) * 0.05;
   });
 
   return (
-    <group ref={group} position={[0.5, -1.2, 0]} scale={[0.65, 0.65, 0.65]}>
-      
+    <group ref={group} position={[0, -1.2, 0]} scale={[0.45, 0.45, 0.45]}>
       <group position={[0, -0.1, 0]}>
+        {/* Grass ground - realistic */}
         <mesh position={[0, -0.15, 0]} receiveShadow castShadow>
-          <boxGeometry args={[8, 0.35, 6]} />
-          <meshStandardMaterial color="#7CB342" />
+          <boxGeometry args={[12, 0.35, 11]} />
+          <meshStandardMaterial
+            color="#5D8A3A"
+            roughness={0.95}
+            metalness={0.01}
+          />
         </mesh>
-        <mesh position={[0, 0.02, 2]} castShadow>
-          <boxGeometry args={[1.5, 0.08, 2]} />
-          <meshStandardMaterial color="#BDBDBD" roughness={0.8} />
+
+        {/* Driveway - realistic concrete */}
+        <mesh position={[-2.5, 0.02, 3]} receiveShadow>
+          <boxGeometry args={[3, 0.08, 5]} />
+          <meshStandardMaterial
+            color="#888888"
+            roughness={0.85}
+            metalness={0.05}
+          />
         </mesh>
-        <mesh position={[-2.2, 0.02, 1]} castShadow>
-          <boxGeometry args={[2.5, 0.08, 3]} />
-          <meshStandardMaterial color="#9E9E9E" roughness={0.7} />
+
+        {/* Walkway - paving stones */}
+        <mesh position={[0.5, 0.02, 2.5]} castShadow>
+          <boxGeometry args={[1.5, 0.08, 2.5]} />
+          <meshStandardMaterial
+            color="#A0947D"
+            roughness={0.9}
+            metalness={0.02}
+          />
         </mesh>
-        {/* Fences */}
-        <mesh position={[-3.8, 0.4, 0]} castShadow>
-          <boxGeometry args={[0.12, 0.8, 6]} />
-          <meshStandardMaterial color="#FAFAFA" />
-        </mesh>
-        <mesh position={[3.8, 0.4, 0]} castShadow>
-          <boxGeometry args={[0.12, 0.8, 6]} />
-          <meshStandardMaterial color="#FAFAFA" />
-        </mesh>
-        <mesh position={[0, 0.4, -2.8]} castShadow>
-          <boxGeometry args={[7.7, 0.8, 0.12]} />
-          <meshStandardMaterial color="#FAFAFA" />
-        </mesh>
+
+        {/* Fence - realistic white paint */}
+        <mesh position={[-5.8, 0.4, 0]} castShadow><boxGeometry args={[0.12, 0.8, 9]} /><meshStandardMaterial color="#F5F5F5" roughness={0.6} metalness={0.1} /></mesh>
+        <mesh position={[5.8, 0.4, 0]} castShadow><boxGeometry args={[0.12, 0.8, 9]} /><meshStandardMaterial color="#F5F5F5" roughness={0.6} metalness={0.1} /></mesh>
+        <mesh position={[0, 0.4, -4.3]} castShadow><boxGeometry args={[11.7, 0.8, 0.12]} /><meshStandardMaterial color="#F5F5F5" roughness={0.6} metalness={0.1} /></mesh>
       </group>
 
-      {/* ===== GARAGE ===== */}
-      <group position={[-2.2, 0.5, 0.5]}>
-        <mesh castShadow>
-          <boxGeometry args={[2.2, 2, 2.5]} />
-          <meshStandardMaterial color="#F5F5F5" />
+      <StreetLamp position={[-3.5, 0, 5]} rotation={[0, -Math.PI / 4, 0]} isDark={isDark} />
+
+      <GardenLight position={[-0.1, 0, 3.5]} isDark={isDark} />
+      <GardenLight position={[1.1, 0, 3.5]} isDark={isDark} />
+      <GardenLight position={[-0.1, 0, 2]} isDark={isDark} />
+      <GardenLight position={[1.1, 0, 2]} isDark={isDark} />
+
+      <SwimmingPool position={[4.0, 0, 1.5]} isDark={isDark} />
+
+      {/* Small building - realistic concrete */}
+      <group position={[-2.5, 0.5, 0.5]}>
+        <mesh castShadow receiveShadow>
+          <boxGeometry args={[2.5, 2, 2.5]} />
+          <meshStandardMaterial
+            color="#ECECEC"
+            roughness={0.75}
+            metalness={0.05}
+          />
         </mesh>
         <mesh position={[0, -0.3, 1.26]} castShadow>
-          <boxGeometry args={[1.8, 1.4, 0.08]} />
+          <boxGeometry args={[2.0, 1.4, 0.08]} />
           <meshStandardMaterial color="#424242" metalness={0.3} roughness={0.6} />
         </mesh>
+        {/* Roof - dark brown tiles */}
         <mesh position={[0, 1.1, 0]} castShadow>
-          <boxGeometry args={[2.4, 0.18, 2.7]} />
-          <meshStandardMaterial color="#5D4037" />
+          <boxGeometry args={[2.7, 0.18, 2.7]} />
+          <meshStandardMaterial
+            color="#4A3428"
+            roughness={0.9}
+            metalness={0.02}
+          />
         </mesh>
+
+        <group position={[1, 0.5, 1.3]}>
+          <mesh>
+            <boxGeometry args={[0.15, 0.2, 0.1]} />
+            <meshStandardMaterial color="#333" />
+          </mesh>
+          <mesh position={[0, 0, 0.05]}>
+            <boxGeometry args={[0.1, 0.15, 0.02]} />
+            <meshStandardMaterial color="#FFF" emissive={isDark ? "#FFA000" : "#000"} emissiveIntensity={isDark ? 3 : 0} />
+          </mesh>
+          {isDark && <pointLight intensity={1} distance={3} color="#FFA000" />}
+        </group>
       </group>
 
-      {/* ===== MAIN BUILDING ===== */}
-      <group position={[0.8, 0.8, -0.3]}>
-        <mesh position={[0, 0, 0]} castShadow>
+      <Car position={[-2.5, 0, 4]} rotation={[0, 0, 0]} isDark={isDark} />
+
+      {/* Main house - realistic walls */}
+      <group position={[0.5, 0.8, -0.3]}>
+        <mesh position={[0, 0, 0]} castShadow receiveShadow>
           <boxGeometry args={[4, 2.5, 3.5]} />
-          <meshStandardMaterial color="#FAFAFA" />
+          <meshStandardMaterial
+            color="#F0F0F0"
+            roughness={0.7}
+            metalness={0.08}
+          />
         </mesh>
-        <mesh position={[0.3, 2.2, 0]} castShadow>
+        {/* Upper floor - realistic walls */}
+        <mesh position={[0.3, 2.2, 0]} castShadow receiveShadow>
           <boxGeometry args={[3.4, 1.8, 3.2]} />
-          <meshStandardMaterial color="#F5F5F5" />
+          <meshStandardMaterial
+            color="#EFEFEF"
+            roughness={0.7}
+            metalness={0.08}
+          />
         </mesh>
-        
-        {/* Windows Floor 1 - Warm light in dark mode */}
+
+        {/* Windows - realistic glass */}
         <mesh position={[-1.2, 0.2, 1.76]}>
           <boxGeometry args={[0.8, 1.2, 0.06]} />
-          <meshStandardMaterial 
-            color={isDark ? "#FFE082" : "#4FC3F7"} 
+          <meshStandardMaterial
+            color={isDark ? "#FFE082" : "#87CEEB"}
             emissive={isDark ? "#FFA726" : "#000000"}
             emissiveIntensity={isDark ? 0.8 : 0}
-            metalness={isDark ? 0.1 : 0.5} 
-            roughness={isDark ? 0.3 : 0.1} 
+            metalness={0.3}
+            roughness={0.2}
+            transparent
+            opacity={0.7}
           />
         </mesh>
         <mesh position={[1.2, 0.2, 1.76]}>
           <boxGeometry args={[0.8, 1.2, 0.06]} />
-          <meshStandardMaterial 
-            color={isDark ? "#FFE082" : "#4FC3F7"} 
+          <meshStandardMaterial
+            color={isDark ? "#FFE082" : "#87CEEB"}
             emissive={isDark ? "#FFA726" : "#000000"}
             emissiveIntensity={isDark ? 0.8 : 0}
-            metalness={isDark ? 0.1 : 0.5} 
-            roughness={isDark ? 0.3 : 0.1} 
+            metalness={0.3}
+            roughness={0.2}
+            transparent
+            opacity={0.7}
           />
         </mesh>
-        
-        {/* Door */}
+
+        {/* Front door - wood texture */}
         <mesh position={[0, -0.4, 1.76]} castShadow>
           <boxGeometry args={[0.9, 1.7, 0.1]} />
-          <meshStandardMaterial color="#5D4037" />
+          <meshStandardMaterial
+            color="#3E2723"
+            roughness={0.8}
+            metalness={0.05}
+          />
         </mesh>
-        <mesh position={[0.3, -0.4, 1.82]}>
+        <mesh position={[0.35, -0.4, 1.82]}>
           <sphereGeometry args={[0.05, 8, 8]} />
           <meshStandardMaterial color="#FFD54F" metalness={0.8} />
         </mesh>
-        
-        {/* Window Floor 2 - Warm light in dark mode */}
+
+        <group position={[-0.6, 0.2, 1.8]}>
+          <mesh>
+            <boxGeometry args={[0.12, 0.25, 0.1]} />
+            <meshStandardMaterial color="#333" />
+          </mesh>
+          <mesh position={[0, 0, 0.06]}>
+            <boxGeometry args={[0.08, 0.18, 0.02]} />
+            <meshStandardMaterial color="#FFF" emissive={isDark ? "#FFA000" : "#000"} emissiveIntensity={isDark ? 3 : 0} />
+          </mesh>
+          {isDark && <pointLight intensity={1.5} distance={4} color="#FFA000" />}
+        </group>
+        <group position={[0.6, 0.2, 1.8]}>
+          <mesh>
+            <boxGeometry args={[0.12, 0.25, 0.1]} />
+            <meshStandardMaterial color="#333" />
+          </mesh>
+          <mesh position={[0, 0, 0.06]}>
+            <boxGeometry args={[0.08, 0.18, 0.02]} />
+            <meshStandardMaterial color="#FFF" emissive={isDark ? "#FFA000" : "#000"} emissiveIntensity={isDark ? 3 : 0} />
+          </mesh>
+          {isDark && <pointLight intensity={1.5} distance={4} color="#FFA000" />}
+        </group>
+
+        {/* Upper window - realistic glass */}
         <mesh position={[0.3, 2.2, 1.61]}>
           <boxGeometry args={[2, 1, 0.06]} />
-          <meshStandardMaterial 
-            color={isDark ? "#FFE082" : "#4FC3F7"} 
-            emissive={isDark ? "#FFA726" : "#000000"}
-            emissiveIntensity={isDark ? 0.8 : 0}
-            metalness={isDark ? 0.1 : 0.5} 
-            roughness={isDark ? 0.3 : 0.1} 
-          />
+          <meshStandardMaterial color={isDark ? "#FFE082" : "#4FC3F7"} emissive={isDark ? "#FFA726" : "#000000"} emissiveIntensity={isDark ? 0.8 : 0} metalness={isDark ? 0.1 : 0.5} roughness={isDark ? 0.3 : 0.1} />
         </mesh>
-        
-        {/* Balcony */}
+
         <mesh position={[0.3, 1.4, 1.8]} castShadow>
           <boxGeometry args={[2.5, 0.12, 0.6]} />
           <meshStandardMaterial color="#9E9E9E" />
@@ -278,29 +966,12 @@ const ModernHouse = ({ onHotspotClick, activePanel, isDark }) => {
           <boxGeometry args={[2.5, 0.5, 0.06]} />
           <meshStandardMaterial color="#E0E0E0" transparent opacity={0.6} />
         </mesh>
-
-        {/* Hotspots */}
-        <Hotspot 
-          position={[0, 0, 2.5]} 
-          label="💬 Line Official"
-          onClick={() => onHotspotClick('line')}
-          color="#22c55e"
-          isActive={activePanel === 'line'}
-        />
-        <Hotspot 
-          position={[1.5, 0.5, 2.3]} 
-          label="📞 ติดต่อเรา"
-          onClick={() => onHotspotClick('contact')}
-          color="#ea580c"
-          isActive={activePanel === 'contact'}
-        />
       </group>
 
-      {/* ===== ROOF ===== */}
-      <group position={[1.1, 3.5, -0.3]}>
+      <group position={[0.8, 3.5, -0.3]}>
         <mesh position={[0, 0.5, 0]} castShadow>
           <boxGeometry args={[4.2, 0.22, 3.8]} />
-          <meshStandardMaterial color="#5D4037" />
+          <meshStandardMaterial color="#3E2723" />
         </mesh>
         <mesh position={[0, 0.72, 0]} castShadow>
           <boxGeometry args={[3.6, 0.22, 3.2]} />
@@ -308,33 +979,56 @@ const ModernHouse = ({ onHotspotClick, activePanel, isDark }) => {
         </mesh>
         <mesh position={[0, 0.94, 0]} castShadow>
           <boxGeometry args={[2.8, 0.18, 2.4]} />
-          <meshStandardMaterial color="#3E2723" />
+          <meshStandardMaterial color="#5D4037" />
         </mesh>
-        
-        <Hotspot 
-          position={[0, 1.5, 0]} 
-          label="🏠 ดูแบบบ้าน"
-          onClick={() => onHotspotClick('houses')}
-          color="#3b82f6"
-          isActive={activePanel === 'houses'}
-        />
       </group>
 
-      {/* ===== TREES & BUSHES ===== */}
-      <Tree position={[3.2, 0, -1.5]} scale={1.2} />
-      <Tree position={[-3.2, 0, -2]} scale={0.9} />
-      <Tree position={[3, 0, 1.5]} scale={0.8} />
-      
-      <Bush position={[2.5, 0.1, 2]} scale={1} />
-      <Bush position={[-1, 0.1, 2.2]} scale={0.8} />
-      <Bush position={[3.2, 0.1, 0.5]} scale={0.7} />
-      <Bush position={[-3, 0.1, 0]} scale={0.9} />
+      <Tree position={[5.2, 0, -3.5]} scale={1.2} />
+      <Tree position={[-5.0, 0, -3]} scale={1.1} />
+      <Tree position={[5, 0, 4]} scale={0.9} />
 
+      <Bush position={[3, 0.1, 4.5]} scale={1} />
+      <Bush position={[-1, 0.1, 3]} scale={0.8} />
+      <Bush position={[5.2, 0.1, 1]} scale={0.7} />
+      <Bush position={[-4.5, 0.1, 1]} scale={0.9} />
     </group>
   );
 };
 
-// --- Info Panel (Toggle, not dialog) ---
+// --- Bottom Menu Component ---
+const BottomMenu = ({ activePanel, onButtonClick }) => {
+  const buttons = [
+    { id: 'houses', label: 'แบบบ้าน', icon: <Home size={18} />, color: 'bg-blue-500', shadow: 'shadow-blue-500/30' },
+    { id: 'line', label: 'Line Official', icon: <MessageCircle size={18} />, color: 'bg-green-500', shadow: 'shadow-green-500/30' },
+  ];
+
+  return (
+    <div className="fixed bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-50 w-auto">
+      <div className="flex items-center gap-3 p-2.5 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl">
+        {buttons.map((btn) => {
+          const isActive = activePanel === btn.id;
+          return (
+            <button
+              key={btn.id}
+              onClick={() => onButtonClick(btn.id)}
+              className={`
+                relative flex items-center gap-2 px-4 md:px-5 py-2.5 rounded-xl font-bold text-sm md:text-base text-white 
+                transition-all duration-300 transform
+                ${isActive ? `${btn.color} scale-105 shadow-lg ${btn.shadow} ring-2 ring-white/50` : 'hover:bg-white/10 hover:scale-105'}
+              `}
+            >
+              {btn.icon}
+              <span className="hidden md:inline">{btn.label}</span>
+              <span className="md:hidden">{btn.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// --- Info Panel ---
 const InfoPanel = ({ type, isVisible, onClose }) => {
   const content = {
     line: {
@@ -355,28 +1049,6 @@ const InfoPanel = ({ type, isVisible, onClose }) => {
               </div>
             ))}
           </div>
-        </div>
-      )
-    },
-    contact: {
-      title: "ติดต่อเรา",
-      icon: <Phone className="text-white" size={24} />,
-      color: "bg-orange-500",
-      content: (
-        <div className="space-y-3">
-          <p className="text-slate-600 mb-4">พร้อมให้คำปรึกษาและออกแบบบ้านในฝันของคุณ</p>
-          {[
-            { icon: Phone, label: "083-892-4659" },
-            { icon: Phone, label: "097-248-1259" },
-            { icon: Mail, label: "crystalbridge.co.th@gmail.com" }
-          ].map((item, i) => (
-            <div key={i} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl hover:bg-orange-50 transition-colors cursor-pointer">
-              <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                <item.icon className="text-orange-600" size={16} />
-              </div>
-              <span className="font-medium text-slate-700">{item.label}</span>
-            </div>
-          ))}
         </div>
       )
     },
@@ -418,7 +1090,6 @@ const InfoPanel = ({ type, isVisible, onClose }) => {
   return (
     <div className={`fixed right-4 top-24 w-80 z-40 transition-all duration-500 ease-out ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'}`}>
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
-        {/* Header */}
         <div className={`${info.color} px-5 py-4 flex items-center justify-between`}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
@@ -426,15 +1097,14 @@ const InfoPanel = ({ type, isVisible, onClose }) => {
             </div>
             <h3 className="text-white font-bold text-lg">{info.title}</h3>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-colors"
           >
             <X className="text-white" size={18} />
           </button>
         </div>
-        
-        {/* Content */}
+
         <div className="p-5">
           {info.content}
         </div>
@@ -443,26 +1113,25 @@ const InfoPanel = ({ type, isVisible, onClose }) => {
   );
 };
 
-// --- Hero Content (Left side) ---
+// --- Hero Content ---
 const HeroContent = ({ isDark }) => {
   return (
-    <div className="fixed left-6 md:left-16 top-1/2 -translate-y-1/2 z-20 max-w-md">
-      <div className={`backdrop-blur-xl p-8 rounded-3xl shadow-2xl border ${isDark ? 'bg-slate-900/80 border-slate-700' : 'bg-white/80 border-white/50'}`}>
-        <div className="inline-block bg-linear-to-r from-orange-500 to-amber-500 text-white px-4 py-2 rounded-full text-sm font-bold mb-4">
+    <div className="fixed left-6 md:left-16 top-1/2 -translate-y-1/2 z-20 max-w-md pointer-events-none">
+      <div className={`backdrop-blur-xl p-8 rounded-3xl shadow-2xl border pointer-events-auto ${isDark ? 'bg-slate-900/80 border-slate-700' : 'bg-white/80 border-white/50'}`}>
+        <div className="inline-block bg-gradient-to-r from-orange-500 to-amber-500 text-white px-4 py-2 rounded-full text-sm font-bold mb-4">
           ✨ รับสร้างบ้าน 2026
         </div>
         <h1 className={`text-4xl md:text-5xl font-bold leading-tight mb-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-          สร้างบ้าน...<br/>
-          <span className="text-transparent bg-clip-text bg-linear-to-r from-orange-600 to-amber-500">
+          สร้างบ้าน...<br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500">
             ที่บ่งบอกความเป็นคุณ
           </span>
         </h1>
         <p className={`leading-relaxed mb-6 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-          บริการรับสร้างบ้านครบวงจร รีสอร์ท บ้านลอยน้ำ และอาคารพาณิชย์ 
+          บริการรับสร้างบ้านครบวงจร รีสอร์ท บ้านลอยน้ำ และอาคารพาณิชย์
           ด้วยเทคโนโลยีทันสมัย ใส่ใจทุกรายละเอียด
         </p>
-        
-        {/* Stats */}
+
         <div className={`flex gap-6 mb-6 p-4 rounded-2xl ${isDark ? 'bg-slate-800' : 'bg-slate-900'} text-white`}>
           <div className="text-center">
             <div className="text-xl font-bold text-orange-400">50+</div>
@@ -479,7 +1148,7 @@ const HeroContent = ({ isDark }) => {
         </div>
 
         <div className="space-y-3">
-          <button className="w-full bg-linear-to-r from-orange-600 to-amber-500 text-white px-8 py-4 rounded-xl font-bold hover:shadow-xl hover:shadow-orange-500/30 transition-all duration-300 flex items-center justify-center gap-2">
+          <button className="w-full bg-gradient-to-r from-orange-600 to-amber-500 text-white px-8 py-4 rounded-xl font-bold hover:shadow-xl hover:shadow-orange-500/30 transition-all duration-300 flex items-center justify-center gap-2">
             ดูแบบบ้าน
             <ChevronRight size={20} />
           </button>
@@ -500,116 +1169,106 @@ const HeroContent = ({ isDark }) => {
 const HomePage = ({ isDark }) => {
   const [activePanel, setActivePanel] = useState(null);
 
-  const handleHotspotClick = useCallback((type) => {
-    // Toggle: if same panel clicked, close it
+  const handleToggle = (type) => {
     setActivePanel(prev => prev === type ? null : type);
-  }, []);
+  };
 
   const handleClosePanel = useCallback(() => {
     setActivePanel(null);
   }, []);
 
-  // Theme-aware backgrounds
   const lightBg = 'linear-gradient(180deg, #fef3c7 0%, #fed7aa 25%, #fecaca 50%, #e0e7ff 75%, #c7d2fe 100%)';
   const darkBg = 'linear-gradient(180deg, #0f172a 0%, #1e293b 30%, #334155 60%, #1e1b4b 100%)';
 
   return (
     <>
-
-      {/* Background Gradient - Theme aware */}
-      <div className="fixed inset-0 w-full h-full transition-all duration-700" style={{ 
+      <div className="fixed inset-0 w-full h-full transition-all duration-700" style={{
         background: isDark ? darkBg : lightBg,
-        zIndex: -1 
+        zIndex: -1
       }}></div>
-      
-      {/* Decorative Elements - Theme aware */}
+
       <div className="fixed inset-0 overflow-hidden pointer-events-none transition-all duration-700" style={{ zIndex: -1 }}>
         {isDark ? (
           <>
-            {/* Aurora/Northern Lights effect - no hard edge */}
             <div className="absolute top-0 left-0 right-0 h-[500px]">
               <div className="absolute -top-20 left-1/4 w-[700px] h-[400px] bg-gradient-to-b from-emerald-500/25 via-cyan-400/15 to-transparent rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '4s' }}></div>
               <div className="absolute top-0 right-1/4 w-[600px] h-[350px] bg-gradient-to-b from-violet-500/20 via-fuchsia-400/10 to-transparent rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '6s', animationDelay: '1s' }}></div>
               <div className="absolute -top-10 left-1/2 w-[500px] h-[300px] bg-gradient-to-b from-teal-400/15 via-green-300/8 to-transparent rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '5s', animationDelay: '2s' }}></div>
             </div>
-            {/* Stars effect for dark mode */}
             <div className="absolute top-10 left-1/4 w-1 h-1 bg-white rounded-full opacity-60"></div>
             <div className="absolute top-20 left-1/3 w-1.5 h-1.5 bg-white rounded-full opacity-40"></div>
             <div className="absolute top-32 right-1/4 w-1 h-1 bg-white rounded-full opacity-70"></div>
             <div className="absolute top-16 right-1/3 w-2 h-2 bg-white rounded-full opacity-30"></div>
             <div className="absolute top-40 left-1/2 w-1.5 h-1.5 bg-white rounded-full opacity-50"></div>
-            <div className="absolute top-60 left-[15%] w-1 h-1 bg-white rounded-full opacity-40"></div>
-            <div className="absolute top-50 right-[20%] w-1.5 h-1.5 bg-white rounded-full opacity-60"></div>
-            {/* Moon glow */}
             <div className="absolute -top-20 right-1/4 w-[400px] h-[400px] bg-indigo-500/20 rounded-full blur-[120px]"></div>
-            {/* Ground glow */}
-            <div className="absolute bottom-0 left-0 right-0 h-40 bg-linear-to-t from-slate-900/50 to-transparent"></div>
+            <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-slate-900/50 to-transparent"></div>
           </>
         ) : (
           <>
-            {/* Sun glow effect */}
             <div className="absolute -top-40 right-1/4 w-[500px] h-[500px] bg-amber-300/40 rounded-full blur-[100px]"></div>
-            {/* Cloud shapes */}
             <div className="absolute top-20 left-20 w-40 h-20 bg-white/50 rounded-full blur-xl"></div>
             <div className="absolute top-32 left-40 w-32 h-16 bg-white/40 rounded-full blur-xl"></div>
-            <div className="absolute top-16 right-40 w-48 h-24 bg-white/40 rounded-full blur-xl"></div>
-            <div className="absolute top-28 right-60 w-36 h-18 bg-white/30 rounded-full blur-xl"></div>
-            {/* Ground reflection */}
-            <div className="absolute bottom-0 left-0 right-0 h-32 bg-linear-to-t from-amber-100/50 to-transparent"></div>
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-amber-100/50 to-transparent"></div>
           </>
         )}
       </div>
 
-      {/* 3D Canvas - transparent to show gradient behind */}
       <div className="fixed inset-0 w-full h-screen" style={{ zIndex: 0 }}>
-        <Canvas 
-          shadows 
+        <Canvas
+          shadows
           camera={{ position: [0, 1.5, 10], fov: 45 }}
           gl={{ antialias: true, alpha: true }}
           style={{ background: 'transparent' }}
         >
           <Suspense fallback={null}>
-            
-            <ambientLight intensity={isDark ? 0.4 : 0.6} />
-            <directionalLight 
-              position={[8, 12, 8]} 
-              intensity={isDark ? 1.0 : 1.5} 
+            <Moon isDark={isDark} />
+
+            {/* Ambient light - soft fill */}
+            <ambientLight intensity={isDark ? 0.4 : 0.7} />
+
+            {/* Main directional light - sun/moon */}
+            <directionalLight
+              position={[8, 12, 8]}
+              intensity={isDark ? 0.6 : 1.8}
               castShadow
-              shadow-mapSize-width={2048}
-              shadow-mapSize-height={2048}
+              shadow-mapSize-width={4096}
+              shadow-mapSize-height={4096}
+              shadow-camera-far={50}
+              shadow-camera-left={-15}
+              shadow-camera-right={15}
+              shadow-camera-top={15}
+              shadow-camera-bottom={-15}
+              shadow-bias={-0.0001}
             />
-            <directionalLight position={[-5, 5, -5]} intensity={isDark ? 0.2 : 0.3} />
-            <hemisphereLight intensity={isDark ? 0.3 : 0.4} groundColor="#8d7c5c" />
-            
-            {/* Environment only for lighting reflections, not as visible background */}
+
+            {/* Fill light from opposite side */}
+            <directionalLight
+              position={[-5, 5, -5]}
+              intensity={isDark ? 0.25 : 0.4}
+              color={isDark ? "#4A5568" : "#FED7AA"}
+            />
+
+            {/* Hemisphere light - sky/ground bounce */}
+            <hemisphereLight
+              intensity={isDark ? 0.35 : 0.5}
+              color={isDark ? "#7C8DB0" : "#FED7AA"}
+              groundColor={isDark ? "#374151" : "#8B7355"}
+            />
+
             <Environment preset={isDark ? "night" : "sunset"} background={false} />
 
-            <ModernHouse 
-              onHotspotClick={handleHotspotClick}
-              activePanel={activePanel}
-              isDark={isDark}
-            />
+            <ModernHouse isDark={isDark} />
           </Suspense>
         </Canvas>
       </div>
 
-      {/* Hero Content - Left Side */}
       <HeroContent isDark={isDark} />
 
-      {/* Info Panels - Toggle on hotspot click */}
-      <InfoPanel 
-        type="line" 
-        isVisible={activePanel === 'line'} 
-        onClose={handleClosePanel}
-      />
-      <InfoPanel 
-        type="contact" 
-        isVisible={activePanel === 'contact'} 
-        onClose={handleClosePanel}
-      />
-      <InfoPanel 
-        type="houses" 
-        isVisible={activePanel === 'houses'} 
+      <BottomMenu activePanel={activePanel} onButtonClick={handleToggle} />
+
+      <InfoPanel
+        type={activePanel}
+        isVisible={!!activePanel}
         onClose={handleClosePanel}
       />
     </>
