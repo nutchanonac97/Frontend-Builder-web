@@ -8,7 +8,11 @@ const Navbar = ({ isDark, toggleTheme }) => {
   const location = useLocation();
 
   const menuData = {
-    prices: ["แบบบ้านไม่เกิน 5 ล้าน", "แบบบ้าน 5-10 ล้าน", "แบบบ้าน 10 ล้านขึ้นไป"],
+    prices: [
+      { label: "แบบบ้านไม่เกิน 5 ล้าน", slug: "under5m" },
+      { label: "แบบบ้าน 5-10 ล้าน", slug: "5to10m" },
+      { label: "แบบบ้าน 10 ล้านขึ้นไป", slug: "over10m" },
+    ],
     floors: ["1 ชั้น", "2 ชั้น", "3 ชั้น", "อาคารพาณิชย์"],
     sizes: ["200-300 ตรม.", "301-500 ตรม.", "501-700 ตรม.", "700 ตรม.ขึ้นไป"],
     styles: ["โมเดิร์น / คอนเทมโพรารี่", "คลาสสิค / ยูโรเปียน", "ทรอปิคอล / รีสอร์ท", "นอร์ดิก / เจแปนนิส", "ลักซ์ชัวรี่"]
@@ -95,7 +99,17 @@ const Navbar = ({ isDark, toggleTheme }) => {
                       isDark ? 'text-white border-slate-600' : 'text-slate-900 border-gray-100'
                     }`}>งบประมาณ</h3>
                     <ul className={`space-y-3 text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                      {menuData.prices.map((item, i) => <li key={i} className="hover:text-orange-500 cursor-pointer transition-colors flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-orange-400"></span>{item}</li>)}
+                      {menuData.prices.map((item, i) => (
+                        <li key={i}>
+                          <Link 
+                            to={`/plans?budget=${item.slug}`}
+                            onClick={() => setActiveDropdown(null)}
+                            className="hover:text-orange-500 cursor-pointer transition-colors flex items-center gap-2"
+                          >
+                            <span className="w-1 h-1 rounded-full bg-orange-400"></span>{item.label}
+                          </Link>
+                        </li>
+                      ))}
                     </ul>
                   </div>
                   <div>

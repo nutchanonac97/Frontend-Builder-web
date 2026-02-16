@@ -9,6 +9,7 @@ import ServicesPage from './pages/ServicesPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import PortfolioPage from './pages/PortfolioPage';
+import PlansPage from './pages/PlansPage';
 
 function App() {
   const location = useLocation();
@@ -51,6 +52,7 @@ function App() {
         <Route path="/services" element={<ServicesPage isDark={isDark} />} />
         <Route path="/portfolio" element={<PortfolioPage isDark={isDark} />} />
         <Route path="/about" element={<AboutPage isDark={isDark} />} />
+        <Route path="/plans" element={<PlansPage isDark={isDark} />} />
         <Route path="/contact" element={<ContactPage isDark={isDark} />} />
       </Routes>
       
