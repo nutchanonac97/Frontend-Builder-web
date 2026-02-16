@@ -3,6 +3,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Environment } from '@react-three/drei';
 import { Phone, Mail, X, ChevronRight, Home, Building, Waves, Hotel, MessageCircle } from 'lucide-react';
 import * as THREE from 'three';
+import LoadingScreen from '../components/LoadingScreen';
 
 const Moon = ({ isDark }) => {
   const moonRef = useRef();
@@ -1168,6 +1169,15 @@ const HeroContent = ({ isDark }) => {
 // --- Main HomePage Component ---
 const HomePage = ({ isDark }) => {
   const [activePanel, setActivePanel] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2500); // 2.5 seconds loading time
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleToggle = (type) => {
     setActivePanel(prev => prev === type ? null : type);
@@ -1271,6 +1281,8 @@ const HomePage = ({ isDark }) => {
         isVisible={!!activePanel}
         onClose={handleClosePanel}
       />
+
+      <LoadingScreen isVisible={isLoading} />
     </>
   );
 };
