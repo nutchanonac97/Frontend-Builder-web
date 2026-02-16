@@ -1,10 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Home, Phone, Sun, Moon } from 'lucide-react';
 
 const Navbar = ({ isDark, toggleTheme }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const lastScrollY = useRef(0);
   const location = useLocation();
+
+  // Scroll direction: hide on scroll down, show on scroll up
+  useEffect(() => {
+    const handleScroll = (scrollTop) => {
+      if (scrollTop < 50) {
+        setHidden(false);
+      } else if (scrollTop > lastScrollY.current + 5) {
+        setHidden(true);
+      } else if (scrollTop < lastScrollY.current - 5) {
+        setHidden(false);
+      }
+      lastScrollY.current = scrollTop;
+    };
+
+    const onWindowScroll = () => handleScroll(window.scrollY);
+    const onContainerScroll = (e) => handleScroll(e.detail?.scrollTop ?? 0);
+
+    window.addEventListener('scroll', onWindowScroll, { passive: true });
+    window.addEventListener('containerscroll', onContainerScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onWindowScroll);
+      window.removeEventListener('containerscroll', onContainerScroll);
+    };
+  }, []);
 
   const navLinks = [
     { path: '/', label: 'หน้าแรก' },
@@ -21,7 +47,7 @@ const Navbar = ({ isDark, toggleTheme }) => {
       isDark 
         ? 'bg-slate-900/60' 
         : 'bg-white/60 shadow-sm'
-    }`}>
+    } ${hidden && !isMenuOpen ? '-translate-y-full' : 'translate-y-0'}`}>
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex items-center h-16">
           

@@ -416,6 +416,10 @@ const ServicesPage = ({ isDark = false }) => {
       ref={containerRef}
       className="h-screen overflow-auto snap-y snap-mandatory scrollbar-hide"
       style={{ scrollBehavior: 'smooth' }}
+      onScroll={(e) => {
+        // Dispatch custom event so Navbar can track scroll inside this container
+        window.dispatchEvent(new CustomEvent('containerscroll', { detail: { scrollTop: e.target.scrollTop } }));
+      }}
     >
       {/* Hero */}
       <HeroSection isDark={isDark} onScrollDown={() => scrollToSection(1)} />
