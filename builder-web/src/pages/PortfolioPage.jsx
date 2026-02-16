@@ -1,25 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, ChevronLeft, ChevronRight, MapPin, Calendar, Building2, ArrowRight, Play, Pause, ChevronsLeftRight } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
-// Enhanced mock data with before/after images
-const projects = [
+// Static project data (non-translatable parts)
+const projectsStatic = [
   {
     id: 1,
-    title: 'Modern Luxury Villa',
-    category: 'บ้าน',
-    location: 'กรุงเทพมหานคร',
-    size: '450 ตร.ม.',
-    budget: '12.5 ล้านบาท',
     year: '2025',
-    duration: '8 เดือน',
-    description: 'บ้านหรูสไตล์โมเดิร์นมินิมอล 5 ห้องนอน 6 ห้องน้ำ พร้อมสระว่ายน้ำ infinity และสวนลอยฟ้า ออกแบบเพื่อการใช้ชีวิตแบบ Smart Living',
     tags: ['Smart Home', 'Pool Villa', 'Eco-Friendly'],
     featured: true,
-    testimonial: {
-      text: 'ทีมงานมืออาชีพมาก ตั้งแต่ขั้นตอนออกแบบจนถึงส่งมอบ ผลงานออกมาเกินความคาดหวัง',
-      author: 'คุณสมชาย',
-      role: 'เจ้าของบ้าน'
-    },
     beforeImage: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=1200&q=80',
     afterImage: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&q=80',
     gallery: [
@@ -30,21 +19,9 @@ const projects = [
   },
   {
     id: 2,
-    title: 'Khao Yai Mountain Resort',
-    category: 'รีสอร์ท',
-    location: 'นครราชสีมา',
-    size: '2,500 ตร.ม.',
-    budget: '65 ล้านบาท',
     year: '2024',
-    duration: '14 เดือน',
-    description: 'รีสอร์ทส่วนตัวกลางหุบเขา 12 ห้องพัก พร้อมร้านอาหาร สปา และ infinity pool วิวภูเขา 360 องศา',
     tags: ['Mountain View', 'Boutique', 'Wellness'],
     featured: true,
-    testimonial: {
-      text: 'รีสอร์ทที่สวยที่สุดที่เคยเห็น ทุกรายละเอียดพิถีพิถัน ลูกค้าชื่นชมตลอด',
-      author: 'คุณวิภา',
-      role: 'เจ้าของกิจการ'
-    },
     beforeImage: 'https://images.unsplash.com/photo-1486718448742-163732cd1544?w=1200&q=80',
     afterImage: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=1200&q=80',
     gallery: [
@@ -54,21 +31,9 @@ const projects = [
   },
   {
     id: 3,
-    title: 'Beachfront Pool Villa',
-    category: 'บ้าน',
-    location: 'หัวหิน',
-    size: '380 ตร.ม.',
-    budget: '15 ล้านบาท',
     year: '2025',
-    duration: '10 เดือน',
-    description: 'พูลวิลล่าริมทะเล 4 ห้องนอน สไตล์ทรอปิคอลโมเดิร์น พร้อมสระว่ายน้ำส่วนตัวและระเบียงชมวิวทะเล',
     tags: ['Beachfront', 'Pool Villa', 'Tropical'],
     featured: true,
-    testimonial: {
-      text: 'ตื่นมาเห็นทะเลทุกเช้า บ้านในฝันที่เป็นจริง ขอบคุณทีมงานมาก',
-      author: 'คุณนิดา',
-      role: 'เจ้าของบ้าน'
-    },
     beforeImage: 'https://images.unsplash.com/photo-1574359411659-15573a27fd0c?w=1200&q=80',
     afterImage: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&q=80',
     gallery: [
@@ -78,14 +43,7 @@ const projects = [
   },
   {
     id: 4,
-    title: 'Floating Paradise',
-    category: 'บ้านลอยน้ำ',
-    location: 'กาญจนบุรี',
-    size: '180 ตร.ม.',
-    budget: '6.8 ล้านบาท',
     year: '2025',
-    duration: '6 เดือน',
-    description: 'บ้านลอยน้ำดีไซน์ล้ำสมัย กลางอ่างเก็บน้ำ วิวภูเขา พร้อมระบบพลังงานแสงอาทิตย์และบำบัดน้ำเสีย',
     tags: ['Floating', 'Off-Grid', 'Panoramic View'],
     featured: false,
     beforeImage: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1200&q=80',
@@ -96,14 +54,7 @@ const projects = [
   },
   {
     id: 5,
-    title: 'Nordic Forest Home',
-    category: 'บ้าน',
-    location: 'เชียงใหม่',
-    size: '320 ตร.ม.',
-    budget: '8.5 ล้านบาท',
     year: '2024',
-    duration: '9 เดือน',
-    description: 'บ้านสไตล์สแกนดิเนเวียนกลางป่าสน ออกแบบเพื่อความยั่งยืนด้วยวัสดุท้องถิ่น พลังงานแสงอาทิตย์',
     tags: ['Sustainable', 'Forest Living', 'Natural'],
     featured: false,
     beforeImage: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=1200&q=80',
@@ -114,14 +65,7 @@ const projects = [
   },
   {
     id: 6,
-    title: 'Urban Commercial Hub',
-    category: 'อาคารพาณิชย์',
-    location: 'ชลบุรี',
-    size: '1,200 ตร.ม.',
-    budget: '25 ล้านบาท',
     year: '2024',
-    duration: '12 เดือน',
-    description: 'อาคารพาณิชย์ 5 ชั้น ดีไซน์ทันสมัย พร้อมพื้นที่ค้าปลีก สำนักงาน และที่พักอาศัย',
     tags: ['Mixed-Use', 'Commercial', 'Modern'],
     featured: false,
     beforeImage: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=1200&q=80',
@@ -132,11 +76,8 @@ const projects = [
   }
 ];
 
-const featuredProjects = projects.filter(p => p.featured);
-const categories = ['ทั้งหมด', 'บ้าน', 'รีสอร์ท', 'บ้านลอยน้ำ', 'อาคารพาณิชย์'];
-
 // Before/After Slider Component
-const BeforeAfterSlider = ({ beforeImage, afterImage, title }) => {
+const BeforeAfterSlider = ({ beforeImage, afterImage, title, t }) => {
   const containerRef = useRef(null);
   const [sliderPosition, setSliderPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
@@ -207,14 +148,14 @@ const BeforeAfterSlider = ({ beforeImage, afterImage, title }) => {
       </div>
       
       {/* Labels */}
-      <div className="before-after-label before-after-label-before">3D Render</div>
-      <div className="before-after-label before-after-label-after">ผลงานจริง</div>
+      <div className="before-after-label before-after-label-before">{t('portfolio.beforeLabel')}</div>
+      <div className="before-after-label before-after-label-after">{t('portfolio.afterLabel')}</div>
     </div>
   );
 };
 
 // Full-Screen Hero Component
-const FullScreenHero = ({ projects, isDark, onViewProject }) => {
+const FullScreenHero = ({ projects, onViewProject, t }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -326,7 +267,7 @@ const FullScreenHero = ({ projects, isDark, onViewProject }) => {
               className="group flex items-center gap-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 py-4 rounded-full font-bold transition-all transform hover:scale-105 shadow-xl shadow-orange-500/30 animate-text-reveal"
               style={{ animationDelay: '1.2s' }}
             >
-              ดูรายละเอียด
+              {t('portfolio.viewDetails')}
               <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
@@ -386,7 +327,7 @@ const FullScreenHero = ({ projects, isDark, onViewProject }) => {
 };
 
 // Parallax Section Component
-const ParallaxSection = ({ children, backgroundImage, isDark }) => {
+const ParallaxSection = ({ children, backgroundImage }) => {
   const sectionRef = useRef(null);
   const [offset, setOffset] = useState(0);
 
@@ -420,7 +361,7 @@ const ParallaxSection = ({ children, backgroundImage, isDark }) => {
 };
 
 // Project Detail Modal
-const ProjectDetailModal = ({ project, onClose, isDark }) => {
+const ProjectDetailModal = ({ project, onClose, isDark, t }) => {
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     const handleEsc = (e) => e.key === 'Escape' && onClose();
@@ -456,6 +397,7 @@ const ProjectDetailModal = ({ project, onClose, isDark }) => {
               beforeImage={project.beforeImage}
               afterImage={project.afterImage}
               title={project.title}
+              t={t}
             />
           </div>
 
@@ -475,19 +417,19 @@ const ProjectDetailModal = ({ project, onClose, isDark }) => {
             {/* Stats Grid - Compact */}
             <div className="grid grid-cols-4 gap-3 mb-4">
               <div className="text-center p-3 rounded-xl bg-white/5">
-                <div className="text-white/50 text-xs mb-1">พื้นที่</div>
+                <div className="text-white/50 text-xs mb-1">{t('portfolio.area')}</div>
                 <div className="text-white font-bold text-sm">{project.size}</div>
               </div>
               <div className="text-center p-3 rounded-xl bg-white/5">
-                <div className="text-white/50 text-xs mb-1">งบประมาณ</div>
+                <div className="text-white/50 text-xs mb-1">{t('portfolio.budget')}</div>
                 <div className="text-white font-bold text-sm">{project.budget}</div>
               </div>
               <div className="text-center p-3 rounded-xl bg-white/5">
-                <div className="text-white/50 text-xs mb-1">ระยะเวลา</div>
+                <div className="text-white/50 text-xs mb-1">{t('portfolio.duration')}</div>
                 <div className="text-white font-bold text-sm">{project.duration}</div>
               </div>
               <div className="text-center p-3 rounded-xl bg-white/5">
-                <div className="text-white/50 text-xs mb-1">ปีที่เสร็จ</div>
+                <div className="text-white/50 text-xs mb-1">{t('portfolio.completed')}</div>
                 <div className="text-white font-bold text-sm">{project.year}</div>
               </div>
             </div>
@@ -510,7 +452,7 @@ const ProjectDetailModal = ({ project, onClose, isDark }) => {
 
             {/* CTA */}
             <button className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-3 rounded-full font-bold transition-all transform hover:scale-[1.02] shadow-lg shadow-orange-500/30">
-              สนใจโครงการแบบนี้
+              {t('portfolio.interestedBtn')}
             </button>
           </div>
         </div>
@@ -520,7 +462,7 @@ const ProjectDetailModal = ({ project, onClose, isDark }) => {
 };
 
 // Project Card Component
-const ProjectCard = ({ project, onClick, isDark, index }) => {
+const ProjectCard = ({ project, onClick, index }) => {
   const [ref, setRef] = useState(null);
   const [inView, setInView] = useState(false);
 
@@ -576,12 +518,28 @@ const ProjectCard = ({ project, onClick, isDark, index }) => {
 };
 
 const PortfolioPage = ({ isDark = false }) => {
-  const [selectedCategory, setSelectedCategory] = useState('ทั้งหมด');
+  const { t } = useLanguage();
+  const [selectedCategoryIndex, setSelectedCategoryIndex] = useState(0);
   const [selectedProject, setSelectedProject] = useState(null);
 
-  const filteredProjects = selectedCategory === 'ทั้งหมด' 
-    ? projects 
-    : projects.filter(p => p.category === selectedCategory);
+  // Get translated data
+  const categories = t('portfolio.categories');
+  const translatedCategories = Array.isArray(categories) ? categories : [];
+  const translatedProjects = t('portfolio.projects');
+  const projectsList = Array.isArray(translatedProjects) ? translatedProjects : [];
+
+  // Merge static + translated data
+  const projects = projectsStatic.map((p, i) => ({
+    ...p,
+    ...projectsList[i],
+  }));
+
+  const featuredProjects = projects.filter(p => p.featured);
+
+  // Filter: index 0 = "All"
+  const filteredProjects = selectedCategoryIndex === 0
+    ? projects
+    : projects.filter(p => p.category === translatedCategories[selectedCategoryIndex]);
 
   return (
     <div className={`min-h-screen ${isDark ? 'bg-slate-950' : 'bg-slate-900'}`}>
@@ -589,32 +547,31 @@ const PortfolioPage = ({ isDark = false }) => {
       {/* Full-Screen Hero */}
       <FullScreenHero 
         projects={featuredProjects}
-        isDark={isDark}
         onViewProject={setSelectedProject}
+        t={t}
       />
 
       {/* Stats Parallax Section */}
       <ParallaxSection
         backgroundImage="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920&q=80"
-        isDark={isDark}
       >
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
               <div className="text-5xl md:text-6xl font-bold text-orange-500 mb-2">100+</div>
-              <div className="text-white/70">โครงการสำเร็จ</div>
+              <div className="text-white/70">{t('portfolio.stats.projects')}</div>
             </div>
             <div>
               <div className="text-5xl md:text-6xl font-bold text-orange-500 mb-2">98%</div>
-              <div className="text-white/70">ความพึงพอใจ</div>
+              <div className="text-white/70">{t('portfolio.stats.satisfaction')}</div>
             </div>
             <div>
               <div className="text-5xl md:text-6xl font-bold text-orange-500 mb-2">15+</div>
-              <div className="text-white/70">ปีประสบการณ์</div>
+              <div className="text-white/70">{t('portfolio.stats.experience')}</div>
             </div>
             <div>
               <div className="text-5xl md:text-6xl font-bold text-orange-500 mb-2">50+</div>
-              <div className="text-white/70">ทีมผู้เชี่ยวชาญ</div>
+              <div className="text-white/70">{t('portfolio.stats.team')}</div>
             </div>
           </div>
         </div>
@@ -626,21 +583,21 @@ const PortfolioPage = ({ isDark = false }) => {
           {/* Section Header */}
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              ผลงานทั้งหมด
+              {t('portfolio.section.title')}
             </h2>
             <p className="text-slate-400 max-w-2xl mx-auto">
-              สำรวจโครงการบ้าน รีสอร์ท และอาคารที่เราได้สร้างสรรค์
+              {t('portfolio.section.subtitle')}
             </p>
           </div>
 
           {/* Filter Tabs */}
           <div className="flex flex-wrap justify-center gap-3 mb-12">
-            {categories.map((cat) => (
+            {translatedCategories.map((cat, idx) => (
               <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
+                key={idx}
+                onClick={() => setSelectedCategoryIndex(idx)}
                 className={`px-6 py-3 rounded-full font-medium transition-all duration-300 ${
-                  selectedCategory === cat
+                  selectedCategoryIndex === idx
                     ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30'
                     : 'glass text-white/70 hover:text-white hover:bg-white/10'
                 }`}
@@ -658,7 +615,6 @@ const PortfolioPage = ({ isDark = false }) => {
                 project={project}
                 index={index}
                 onClick={setSelectedProject}
-                isDark={isDark}
               />
             ))}
           </div>
@@ -674,17 +630,17 @@ const PortfolioPage = ({ isDark = false }) => {
         
         <div className="max-w-4xl mx-auto text-center relative">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            พร้อมสร้างบ้านในฝันของคุณ?
+            {t('portfolio.cta.title')}
           </h2>
           <p className="text-white/80 mb-8 text-lg">
-            ปรึกษาทีมออกแบบของเราฟรี พร้อมรับแคตตาล็อกแบบบ้านกว่า 200+ แบบ
+            {t('portfolio.cta.subtitle')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button className="bg-white text-orange-600 px-8 py-4 rounded-full font-bold transition-all transform hover:scale-105 shadow-xl">
-              นัดหมายปรึกษาฟรี
+              {t('portfolio.cta.consult')}
             </button>
             <button className="border-2 border-white text-white px-8 py-4 rounded-full font-bold transition-all hover:bg-white/10">
-              ดาวน์โหลดแคตตาล็อก
+              {t('portfolio.cta.catalog')}
             </button>
           </div>
         </div>
@@ -696,6 +652,7 @@ const PortfolioPage = ({ isDark = false }) => {
           project={selectedProject}
           onClose={() => setSelectedProject(null)}
           isDark={isDark}
+          t={t}
         />
       )}
     </div>
