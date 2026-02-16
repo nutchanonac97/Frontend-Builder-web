@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import { LanguageProvider } from './i18n/LanguageContext';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -41,6 +42,7 @@ function App() {
   }, [isHomePage]);
 
   return (
+    <LanguageProvider>
     <div className="relative w-full min-h-screen">
       <Navbar isDark={isDark} toggleTheme={toggleTheme} />
       
@@ -63,6 +65,7 @@ function App() {
         </div>
       )}
     </div>
+    </LanguageProvider>
   );
 }
 

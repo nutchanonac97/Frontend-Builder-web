@@ -1,12 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Home, Phone, Sun, Moon } from 'lucide-react';
+import { Menu, X, Home, Phone, Sun, Moon, ChevronDown, Globe } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
+
+const languages = [
+  { code: 'th', label: 'ไทย' },
+  { code: 'en', label: 'English' },
+];
 
 const Navbar = ({ isDark, toggleTheme }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
   const lastScrollY = useRef(0);
+  const langRef = useRef(null);
   const location = useLocation();
+  const { language, setLanguage, t } = useLanguage();
 
   // Scroll direction: hide on scroll down, show on scroll up
   useEffect(() => {
@@ -32,15 +41,27 @@ const Navbar = ({ isDark, toggleTheme }) => {
     };
   }, []);
 
+  // Close language dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (langRef.current && !langRef.current.contains(e.target)) {
+        setLangOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const navLinks = [
-    { path: '/', label: 'หน้าแรก' },
-    { path: '/services', label: 'บริการ' },
-    { path: '/portfolio', label: 'ผลงาน' },
-    { path: '/plans', label: 'แบบบ้าน' },
-    { path: '/about', label: 'เกี่ยวกับเรา' },
+    { path: '/', label: t('nav.home') },
+    { path: '/services', label: t('nav.services') },
+    { path: '/portfolio', label: t('nav.portfolio') },
+    { path: '/plans', label: t('nav.plans') },
+    { path: '/about', label: t('nav.about') },
   ];
 
   const isActive = (path) => location.pathname === path;
+  const currentLang = languages.find(l => l.code === language) || languages[0];
 
   return (
     <nav className={`fixed top-0 w-full z-50 backdrop-blur-xl transition-all duration-500 ${
@@ -52,23 +73,23 @@ const Navbar = ({ isDark, toggleTheme }) => {
         <div className="flex items-center h-16">
           
           {/* Logo - Left */}
-          <Link to="/" className="flex items-center gap-2 cursor-pointer z-50 flex-shrink-0">
+          <Link to="/" className="flex items-center gap-2 cursor-pointer z-50 shrink-0">
              <div className={`p-2 rounded-lg shadow-lg transition-all duration-300 ${
-               isDark 
-                 ? 'bg-gradient-to-br from-orange-500 to-orange-600 shadow-orange-500/30' 
-                 : 'bg-orange-600 shadow-orange-600/20'
-             }`}>
-                <Home className="text-white w-5 h-5" />
-             </div>
-             <span className={`font-bold text-xl tracking-tight transition-colors duration-300 ${
-               isDark ? 'text-white' : 'text-slate-900'
-             }`}>
-               CRYSTAL<span className="text-orange-500">BRIDGE</span>
-             </span>
+              isDark 
+                ? 'bg-gradient-to-br from-orange-500 to-amber-600 shadow-orange-500/30' 
+                : 'bg-gradient-to-br from-slate-800 to-slate-900 shadow-slate-500/20'
+            }`}>
+              <Home className="text-white" size={16} />
+            </div>
+            <div className="flex flex-col">
+              <span className={`text-sm font-black tracking-wider leading-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
+                CRYSTAL<span className="text-orange-500">BRIDGE</span>
+              </span>
+            </div>
           </Link>
 
-          {/* Desktop Menu - Centered */}
-          <div className="hidden lg:flex flex-1 justify-center gap-6 items-center">
+          {/* Center Menu */}
+          <div className="hidden lg:flex items-center gap-6 flex-1 justify-center">
             {navLinks.map((link) => (
               <Link 
                 key={link.path}
@@ -87,7 +108,7 @@ const Navbar = ({ isDark, toggleTheme }) => {
           </div>
 
           {/* Right Actions */}
-          <div className="hidden lg:flex items-center gap-3 flex-shrink-0">
+          <div className="hidden lg:flex items-center gap-3 shrink-0">
             <Link 
               to="/contact" 
               className={`px-4 py-1.5 rounded-full transition-all flex items-center gap-2 shadow-lg text-sm ${
@@ -96,8 +117,54 @@ const Navbar = ({ isDark, toggleTheme }) => {
                   : 'bg-slate-900 text-white hover:bg-orange-600 shadow-slate-900/20 hover:shadow-orange-600/30'
               }`}
             >
-              <Phone size={14} /> ติดต่อเรา
+              <Phone size={14} /> {t('nav.contact')}
             </Link>
+
+            {/* Language Dropdown */}
+            <div className="relative" ref={langRef}>
+              <button
+                onClick={() => setLangOpen(!langOpen)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  isDark
+                    ? 'bg-slate-700/60 hover:bg-slate-600/80 text-slate-300'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                }`}
+              >
+                <Globe size={14} />
+                <span>{currentLang.code.toUpperCase()}</span>
+                <ChevronDown size={12} className={`transition-transform ${langOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {langOpen && (
+                <div className={`absolute right-0 top-full mt-2 w-40 rounded-xl overflow-hidden shadow-xl border animate-in fade-in slide-in-from-top-2 duration-200 ${
+                  isDark
+                    ? 'bg-slate-800 border-slate-700'
+                    : 'bg-white border-gray-100'
+                }`}>
+                  {languages.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => {
+                        setLanguage(lang.code);
+                        setLangOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
+                        language === lang.code
+                          ? isDark ? 'bg-orange-500/10 text-orange-400' : 'bg-orange-50 text-orange-600'
+                          : isDark ? 'text-slate-300 hover:bg-slate-700' : 'text-slate-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className="font-medium">{lang.label}</span>
+                      {language === lang.code && (
+                        <svg className="w-4 h-4 ml-auto text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Dark/Light Mode Toggle */}
             <button 
@@ -107,7 +174,7 @@ const Navbar = ({ isDark, toggleTheme }) => {
                   ? 'bg-slate-700/80 hover:bg-slate-600' 
                   : 'bg-slate-200 hover:bg-slate-300'
               }`}
-              title={isDark ? 'เปลี่ยนเป็นโหมดสว่าง' : 'เปลี่ยนเป็นโหมดมืด'}
+              title={isDark ? t('theme.light') : t('theme.dark')}
             >
               <div className={`absolute w-4 h-4 rounded-full shadow-md flex items-center justify-center transition-all duration-300 ${
                 isDark 
@@ -124,7 +191,20 @@ const Navbar = ({ isDark, toggleTheme }) => {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="lg:hidden z-50 flex items-center gap-3">
+          <div className="lg:hidden z-50 flex items-center gap-2">
+            {/* Mobile Language Toggle */}
+            <button
+              onClick={() => setLanguage(language === 'th' ? 'en' : 'th')}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 text-base ${
+                isDark 
+                  ? 'bg-slate-700 hover:bg-slate-600' 
+                  : 'bg-slate-100 hover:bg-slate-200'
+              }`}
+              title={language === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}
+            >
+              <Globe size={18} className={isDark ? 'text-slate-300' : 'text-slate-600'} />
+            </button>
+
             {/* Mobile Theme Toggle */}
             <button 
               onClick={toggleTheme}
@@ -172,7 +252,7 @@ const Navbar = ({ isDark, toggleTheme }) => {
               onClick={() => setIsMenuOpen(false)}
               className="text-lg font-medium text-orange-500 py-2"
             >
-              ติดต่อเรา
+              {t('nav.contact')}
             </Link>
         </div>
       )}
