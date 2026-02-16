@@ -1,27 +1,16 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronDown, Menu, X, Home, Phone, Sun, Moon } from 'lucide-react';
+import { Menu, X, Home, Phone, Sun, Moon } from 'lucide-react';
 
 const Navbar = ({ isDark, toggleTheme }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState(null);
   const location = useLocation();
-
-  const menuData = {
-    prices: [
-      { label: "แบบบ้านไม่เกิน 5 ล้าน", slug: "under5m" },
-      { label: "แบบบ้าน 5-10 ล้าน", slug: "5to10m" },
-      { label: "แบบบ้าน 10 ล้านขึ้นไป", slug: "over10m" },
-    ],
-    floors: ["1 ชั้น", "2 ชั้น", "3 ชั้น", "อาคารพาณิชย์"],
-    sizes: ["200-300 ตรม.", "301-500 ตรม.", "501-700 ตรม.", "700 ตรม.ขึ้นไป"],
-    styles: ["โมเดิร์น / คอนเทมโพรารี่", "คลาสสิค / ยูโรเปียน", "ทรอปิคอล / รีสอร์ท", "นอร์ดิก / เจแปนนิส", "ลักซ์ชัวรี่"]
-  };
 
   const navLinks = [
     { path: '/', label: 'หน้าแรก' },
     { path: '/services', label: 'บริการ' },
     { path: '/portfolio', label: 'ผลงาน' },
+    { path: '/plans', label: 'แบบบ้าน' },
     { path: '/about', label: 'เกี่ยวกับเรา' },
   ];
 
@@ -69,79 +58,6 @@ const Navbar = ({ isDark, toggleTheme }) => {
                 {link.label}
               </Link>
             ))}
-            
-            {/* Mega Menu Trigger */}
-            <div 
-              className="relative group h-20 flex items-center"
-              onMouseEnter={() => setActiveDropdown('plans')}
-              onMouseLeave={() => setActiveDropdown(null)}
-            >
-              <button className={`flex items-center gap-1 font-medium transition-colors outline-none ${
-                isDark 
-                  ? 'text-slate-300 group-hover:text-orange-400' 
-                  : 'text-slate-600 group-hover:text-orange-600'
-              }`}>
-                แบบบ้าน <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${activeDropdown ? 'rotate-180' : ''}`} />
-              </button>
-
-              {/* Mega Menu Content */}
-              {activeDropdown === 'plans' && (
-                <div className={`absolute top-16 left-1/2 -translate-x-1/2 w-[900px] shadow-2xl rounded-2xl border p-8 grid grid-cols-4 gap-8 animate-in fade-in slide-in-from-top-2 duration-200 ${
-                  isDark 
-                    ? 'bg-slate-800 border-slate-700' 
-                    : 'bg-white border-gray-100'
-                }`}>
-                  {/* Decoration line */}
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-400 to-orange-600 rounded-t-2xl"></div>
-                  
-                  <div>
-                    <h3 className={`font-bold mb-4 pb-2 border-b ${
-                      isDark ? 'text-white border-slate-600' : 'text-slate-900 border-gray-100'
-                    }`}>งบประมาณ</h3>
-                    <ul className={`space-y-3 text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                      {menuData.prices.map((item, i) => (
-                        <li key={i}>
-                          <Link 
-                            to={`/plans?budget=${item.slug}`}
-                            onClick={() => setActiveDropdown(null)}
-                            className="hover:text-orange-500 cursor-pointer transition-colors flex items-center gap-2"
-                          >
-                            <span className="w-1 h-1 rounded-full bg-orange-400"></span>{item.label}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className={`font-bold mb-4 pb-2 border-b ${
-                      isDark ? 'text-white border-slate-600' : 'text-slate-900 border-gray-100'
-                    }`}>จำนวนชั้น</h3>
-                    <ul className={`space-y-3 text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                      {menuData.floors.map((item, i) => <li key={i} className="hover:text-orange-500 cursor-pointer transition-colors flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-orange-400"></span>{item}</li>)}
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className={`font-bold mb-4 pb-2 border-b ${
-                      isDark ? 'text-white border-slate-600' : 'text-slate-900 border-gray-100'
-                    }`}>ขนาดพื้นที่</h3>
-                    <ul className={`space-y-3 text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                      {menuData.sizes.map((item, i) => <li key={i} className="hover:text-orange-500 cursor-pointer transition-colors flex items-center gap-2"><span className="w-1 h-1 rounded-full bg-orange-400"></span>{item}</li>)}
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className={`font-bold mb-4 pb-2 border-b ${
-                      isDark ? 'text-white border-slate-600' : 'text-slate-900 border-gray-100'
-                    }`}>สไตล์บ้าน</h3>
-                    <ul className={`space-y-3 text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                      {menuData.styles.map((item, i) => <li key={i} className={`cursor-pointer transition-colors flex items-center gap-2 ${item.includes('ลักซ์ชัวรี่') ? 'text-orange-500 font-bold' : 'hover:text-orange-500'}`}>
-                        <span className={`w-1 h-1 rounded-full ${item.includes('ลักซ์ชัวรี่') ? 'bg-orange-600' : 'bg-orange-400'}`}></span>
-                        {item}
-                      </li>)}
-                    </ul>
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Right Actions */}
@@ -225,13 +141,6 @@ const Navbar = ({ isDark, toggleTheme }) => {
                 {link.label}
               </Link>
             ))}
-            <div className={`py-2 border-b ${isDark ? 'border-slate-700' : 'border-gray-50'}`}>
-                <span className={`text-lg font-medium block mb-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>แบบบ้าน / โปรโมชั่น</span>
-                <div className="pl-4 space-y-2">
-                   <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>เลือกตามงบประมาณ</p>
-                   <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>เลือกตามสไตล์</p>
-                </div>
-            </div>
             <Link 
               to="/contact" 
               onClick={() => setIsMenuOpen(false)}

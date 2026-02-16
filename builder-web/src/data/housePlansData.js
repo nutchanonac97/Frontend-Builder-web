@@ -209,4 +209,27 @@ export const budgetCategories = [
   { slug: 'over10m', label: '10 ล้านขึ้นไป' },
 ];
 
+export const floorOptions = [
+  { value: 1, label: '1 ชั้น' },
+  { value: 2, label: '2 ชั้น' },
+  { value: 3, label: '3 ชั้น' },
+];
+
+export const sizeRanges = [
+  { slug: 'under200', label: 'ไม่เกิน 200 ตร.ม.', min: 0, max: 200 },
+  { slug: '200to400', label: '200-400 ตร.ม.', min: 200, max: 400 },
+  { slug: '400to600', label: '400-600 ตร.ม.', min: 400, max: 600 },
+  { slug: 'over600', label: '600 ตร.ม. ขึ้นไป', min: 600, max: Infinity },
+];
+
+export const styleOptions = [
+  { slug: 'โมเดิร์น', label: 'โมเดิร์น' },
+  { slug: 'คอนเทมโพรารี่', label: 'คอนเทมโพรารี่' },
+  { slug: 'ทรอปิคอล', label: 'ทรอปิคอล' },
+  { slug: 'มินิมอล', label: 'มินิมอล' },
+  { slug: 'นอร์ดิก', label: 'นอร์ดิก' },
+  { slug: 'คลาสสิค', label: 'คลาสสิค' },
+  { slug: 'ลักซ์ชัวรี่', label: 'ลักซ์ชัวรี่' },
+];
+
 export default housePlans;
