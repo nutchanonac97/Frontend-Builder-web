@@ -1,103 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Users, Award, Target, Heart, ChevronDown, Linkedin, Mail, Phone, Calendar, Building, TrendingUp, CheckCircle } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
-// ===== DATA =====
-const stats = [
-  { value: 10, suffix: '+', label: 'ปีประสบการณ์', icon: Calendar },
-  { value: 50, suffix: '+', label: 'โครงการสำเร็จ', icon: Building },
-  { value: 100, suffix: '+', label: 'ลูกค้าที่ไว้วางใจ', icon: Heart },
-  { value: 20, suffix: '+', label: 'ทีมงานมืออาชีพ', icon: Users },
+// ===== STATIC DATA (non-translatable parts) =====
+const statConfigs = [
+  { value: 10, suffix: '+', icon: Calendar },
+  { value: 50, suffix: '+', icon: Building },
+  { value: 100, suffix: '+', icon: Heart },
+  { value: 20, suffix: '+', icon: Users },
 ];
 
-const timeline = [
-  {
-    year: '2015',
-    title: 'ก่อตั้งบริษัท',
-    description: 'เริ่มต้นด้วยทีมงาน 5 คน ด้วยความมุ่งมั่นสร้างบ้านคุณภาพ',
-    icon: Building,
-  },
-  {
-    year: '2018',
-    title: 'ขยายธุรกิจ',
-    description: 'เพิ่มทีมงานและขยายบริการครอบคลุมรีสอร์ทและโรงแรม',
-    icon: TrendingUp,
-  },
-  {
-    year: '2020',
-    title: 'รางวัลคุณภาพ',
-    description: 'ได้รับรางวัลผู้รับเหมาดีเด่นจากสมาคมรับสร้างบ้าน',
-    icon: Award,
-  },
-  {
-    year: '2023',
-    title: 'ครบ 50 โครงการ',
-    description: 'ส่งมอบความสุขให้กับลูกค้ากว่า 50 ครอบครัว',
-    icon: CheckCircle,
-  },
-  {
-    year: '2025',
-    title: 'ก้าวสู่อนาคต',
-    description: 'พัฒนาเทคโนโลยีการก่อสร้างและขยายสู่บ้านสำเร็จรูป',
-    icon: Target,
-  },
+const timelineYears = ['2015', '2018', '2020', '2023', '2025'];
+const timelineIcons = [Building, TrendingUp, Award, CheckCircle, Target];
+
+const valueConfigs = [
+  { icon: Award, size: 'large', gradient: 'from-amber-500 to-orange-600' },
+  { icon: Target, size: 'normal', gradient: 'from-blue-500 to-cyan-600' },
+  { icon: Heart, size: 'normal', gradient: 'from-pink-500 to-rose-600' },
+  { icon: Users, size: 'wide', gradient: 'from-purple-500 to-violet-600' },
 ];
 
-const values = [
-  { 
-    icon: Award, 
-    title: 'คุณภาพ', 
-    description: 'เราใส่ใจทุกรายละเอียด ใช้วัสดุคุณภาพสูงจากแบรนด์ชั้นนำ มาตรฐานการก่อสร้างระดับสากล',
-    size: 'large',
-    gradient: 'from-amber-500 to-orange-600',
-  },
-  { 
-    icon: Target, 
-    title: 'ความแม่นยำ', 
-    description: 'ส่งมอบงานตรงเวลา ตามแผนที่กำหนด ควบคุมงบประมาณอย่างมีประสิทธิภาพ',
-    size: 'normal',
-    gradient: 'from-blue-500 to-cyan-600',
-  },
-  { 
-    icon: Heart, 
-    title: 'ความใส่ใจ', 
-    description: 'ดูแลลูกค้าอย่างจริงใจ ทั้งก่อนและหลังส่งมอบ',
-    size: 'normal',
-    gradient: 'from-pink-500 to-rose-600',
-  },
-  { 
-    icon: Users, 
-    title: 'ทีมงานมืออาชีพ', 
-    description: 'วิศวกรและช่างผู้เชี่ยวชาญกว่า 20 คน พร้อมให้คำปรึกษาและดูแลทุกขั้นตอน',
-    size: 'wide',
-    gradient: 'from-purple-500 to-violet-600',
-  },
-];
-
-const team = [
-  { 
-    name: 'คุณสมชาย ใจดี', 
-    role: 'ผู้ก่อตั้ง & CEO', 
-    bio: 'ประสบการณ์กว่า 15 ปีในวงการก่อสร้าง บริหารโครงการมากกว่า 100 โครงการ',
-    gradient: 'from-orange-500 to-amber-500',
-  },
-  { 
-    name: 'คุณวิศวกร สร้างสรรค์', 
-    role: 'หัวหน้าฝ่ายวิศวกรรม', 
-    bio: 'วิศวกรโยธา ป.โท จากจุฬาฯ ผู้เชี่ยวชาญด้านโครงสร้างอาคาร',
-    gradient: 'from-blue-500 to-cyan-500',
-  },
-  { 
-    name: 'คุณสถาปนิก ดีไซน์', 
-    role: 'หัวหน้าฝ่ายออกแบบ', 
-    bio: 'สถาปนิกผู้เชี่ยวชาญการออกแบบบ้านสไตล์โมเดิร์นและทรอปิคอล',
-    gradient: 'from-purple-500 to-pink-500',
-  },
-  { 
-    name: 'คุณโฟร์แมน มั่นคง', 
-    role: 'หัวหน้าฝ่ายก่อสร้าง', 
-    bio: 'ประสบการณ์คุมงานก่อสร้างกว่า 20 ปี ดูแลทุกขั้นตอนอย่างละเอียด',
-    gradient: 'from-green-500 to-emerald-500',
-  },
+const teamGradients = [
+  'from-orange-500 to-amber-500',
+  'from-blue-500 to-cyan-500',
+  'from-purple-500 to-pink-500',
+  'from-green-500 to-emerald-500',
 ];
 
 // ===== ANIMATED COUNTER HOOK =====
@@ -141,13 +68,14 @@ const useInView = (options = {}) => {
     
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   return [ref, isInView];
 };
 
 // ===== STAT CARD COMPONENT =====
-const StatCard = ({ stat, index, isVisible }) => {
+const StatCard = ({ stat, label, index, isVisible }) => {
   const count = useCountUp(stat.value, 2000, isVisible);
   const Icon = stat.icon;
   
@@ -167,7 +95,7 @@ const StatCard = ({ stat, index, isVisible }) => {
       <div className="text-4xl md:text-5xl font-bold text-white mb-1">
         {count}{stat.suffix}
       </div>
-      <div className="text-white/70 text-sm">{stat.label}</div>
+      <div className="text-white/70 text-sm">{label}</div>
     </div>
   );
 };
@@ -256,7 +184,7 @@ const ValueCard = ({ value, index, isVisible, isDark }) => {
 };
 
 // ===== TEAM CARD COMPONENT (3D FLIP) =====
-const TeamCard = ({ member, index, isVisible, isDark }) => {
+const TeamCard = ({ member, gradient, index, isVisible, isDark, hoverHint }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   
   return (
@@ -282,10 +210,10 @@ const TeamCard = ({ member, index, isVisible, isDark }) => {
           className="absolute inset-0 rounded-3xl overflow-hidden"
           style={{ backfaceVisibility: 'hidden' }}
         >
-          <div className={`w-full h-full bg-gradient-to-br ${member.gradient} p-1`}>
+          <div className={`w-full h-full bg-gradient-to-br ${gradient} p-1`}>
             <div className={`w-full h-full rounded-3xl flex flex-col items-center justify-center ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
               {/* Avatar placeholder */}
-              <div className={`w-24 h-24 rounded-full bg-gradient-to-br ${member.gradient} flex items-center justify-center mb-4`}>
+              <div className={`w-24 h-24 rounded-full bg-gradient-to-br ${gradient} flex items-center justify-center mb-4`}>
                 <Users className="w-12 h-12 text-white" />
               </div>
               <h3 className={`text-lg font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
@@ -295,7 +223,7 @@ const TeamCard = ({ member, index, isVisible, isDark }) => {
                 {member.role}
               </p>
               <div className="mt-4 text-xs text-orange-500 font-medium">
-                Hover เพื่อดูรายละเอียด →
+                {hoverHint}
               </div>
             </div>
           </div>
@@ -309,7 +237,7 @@ const TeamCard = ({ member, index, isVisible, isDark }) => {
             transform: 'rotateY(180deg)'
           }}
         >
-          <div className={`w-full h-full bg-gradient-to-br ${member.gradient} p-6 flex flex-col justify-between`}>
+          <div className={`w-full h-full bg-gradient-to-br ${gradient} p-6 flex flex-col justify-between`}>
             <div>
               <h3 className="text-xl font-bold text-white mb-2">{member.name}</h3>
               <p className="text-white/80 text-sm mb-4">{member.role}</p>
@@ -337,11 +265,18 @@ const TeamCard = ({ member, index, isVisible, isDark }) => {
 
 // ===== MAIN COMPONENT =====
 const AboutPage = ({ isDark = false }) => {
+  const { t } = useLanguage();
   const [heroRef, heroInView] = useInView();
   const [timelineRef, timelineInView] = useInView();
   const [valuesRef, valuesInView] = useInView();
   const [teamRef, teamInView] = useInView();
   const [parallaxOffset, setParallaxOffset] = useState(0);
+
+  // Get translated data
+  const trStats = t('about.stats') || [];
+  const trTimeline = t('about.timeline') || [];
+  const trValues = t('about.values') || [];
+  const trTeam = t('about.team') || [];
 
   // Parallax effect
   useEffect(() => {
@@ -386,7 +321,7 @@ const AboutPage = ({ isDark = false }) => {
               transition: 'all 0.6s ease-out'
             }}
           >
-            🏢 เกี่ยวกับเรา
+            {t('about.heroBadge')}
           </div>
           
           {/* Title */}
@@ -398,7 +333,7 @@ const AboutPage = ({ isDark = false }) => {
               transition: 'all 0.8s ease-out 0.2s'
             }}
           >
-            บริษัท <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-400">คริสตัล บริดจ์</span> จำกัด
+            {t('about.heroTitle1')}<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-amber-400">{t('about.heroTitle2')}</span>{t('about.heroTitle3')}
           </h1>
           
           {/* Subtitle */}
@@ -410,14 +345,13 @@ const AboutPage = ({ isDark = false }) => {
               transition: 'all 0.8s ease-out 0.4s'
             }}
           >
-            ผู้เชี่ยวชาญด้านการรับสร้างบ้านและอาคารมากว่า 10 ปี ด้วยทีมงานวิศวกรและสถาปนิกที่มีประสบการณ์ 
-            พร้อมช่างฝีมือระดับมืออาชีพ มุ่งมั่นสร้างสรรค์ที่อยู่อาศัยที่ตอบโจทย์ทุกความต้องการ
+            {t('about.heroSubtitle')}
           </p>
           
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mt-12">
-            {stats.map((stat, index) => (
-              <StatCard key={index} stat={stat} index={index} isVisible={heroInView} />
+            {statConfigs.map((stat, index) => (
+              <StatCard key={index} stat={stat} label={trStats[index]?.label} index={index} isVisible={heroInView} />
             ))}
           </div>
         </div>
@@ -425,7 +359,7 @@ const AboutPage = ({ isDark = false }) => {
         {/* Scroll Indicator */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-float">
           <div className="flex flex-col items-center text-white/60">
-            <span className="text-sm mb-2">เลื่อนลง</span>
+            <span className="text-sm mb-2">{t('about.scrollDown')}</span>
             <ChevronDown className="w-6 h-6" />
           </div>
         </div>
@@ -449,7 +383,7 @@ const AboutPage = ({ isDark = false }) => {
                 transition: 'all 0.6s ease-out'
               }}
             >
-              เส้นทางของเรา
+              {t('about.timelineTitle')}
             </h2>
             <p 
               className={`max-w-2xl mx-auto ${isDark ? 'text-slate-400' : 'text-slate-600'}`}
@@ -459,20 +393,28 @@ const AboutPage = ({ isDark = false }) => {
                 transition: 'all 0.6s ease-out 0.1s'
               }}
             >
-              การเดินทางกว่า 10 ปีที่เราสั่งสมประสบการณ์และสร้างความไว้วางใจ
+              {t('about.timelineSubtitle')}
             </p>
           </div>
           
           {/* Timeline Items */}
           <div className="space-y-12">
-            {timeline.map((item, index) => (
-              <TimelineItem 
-                key={index} 
-                item={item} 
-                index={index} 
-                isVisible={timelineInView} 
-              />
-            ))}
+            {timelineYears.map((year, index) => {
+              const tr = trTimeline[index] || {};
+              return (
+                <TimelineItem 
+                  key={index} 
+                  item={{
+                    year,
+                    icon: timelineIcons[index],
+                    title: tr.title || '',
+                    description: tr.description || '',
+                  }} 
+                  index={index} 
+                  isVisible={timelineInView} 
+                />
+              );
+            })}
           </div>
         </div>
       </section>
@@ -490,7 +432,7 @@ const AboutPage = ({ isDark = false }) => {
                 transition: 'all 0.6s ease-out'
               }}
             >
-              ค่านิยมของเรา
+              {t('about.valuesTitle')}
             </h2>
             <p 
               className={`max-w-2xl mx-auto ${isDark ? 'text-slate-400' : 'text-slate-600'}`}
@@ -500,21 +442,28 @@ const AboutPage = ({ isDark = false }) => {
                 transition: 'all 0.6s ease-out 0.1s'
               }}
             >
-              สิ่งที่เรายึดถือและปฏิบัติในการทำงานทุกโครงการ
+              {t('about.valuesSubtitle')}
             </p>
           </div>
           
           {/* Bento Grid */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {values.map((value, index) => (
-              <ValueCard 
-                key={index} 
-                value={value} 
-                index={index} 
-                isVisible={valuesInView}
-                isDark={isDark}
-              />
-            ))}
+            {valueConfigs.map((config, index) => {
+              const tr = trValues[index] || {};
+              return (
+                <ValueCard 
+                  key={index} 
+                  value={{
+                    ...config,
+                    title: tr.title || '',
+                    description: tr.description || '',
+                  }} 
+                  index={index} 
+                  isVisible={valuesInView}
+                  isDark={isDark}
+                />
+              );
+            })}
           </div>
         </div>
       </section>
@@ -532,7 +481,7 @@ const AboutPage = ({ isDark = false }) => {
                 transition: 'all 0.6s ease-out'
               }}
             >
-              ทีมงานของเรา
+              {t('about.teamTitle')}
             </h2>
             <p 
               className={`max-w-2xl mx-auto ${isDark ? 'text-slate-400' : 'text-slate-600'}`}
@@ -542,21 +491,26 @@ const AboutPage = ({ isDark = false }) => {
                 transition: 'all 0.6s ease-out 0.1s'
               }}
             >
-              ผู้เชี่ยวชาญที่พร้อมดูแลโครงการของคุณ
+              {t('about.teamSubtitle')}
             </p>
           </div>
           
           {/* Team Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {team.map((member, index) => (
-              <TeamCard 
-                key={index} 
-                member={member} 
-                index={index} 
-                isVisible={teamInView}
-                isDark={isDark}
-              />
-            ))}
+            {teamGradients.map((gradient, index) => {
+              const tr = trTeam[index] || {};
+              return (
+                <TeamCard 
+                  key={index} 
+                  member={tr}
+                  gradient={gradient}
+                  index={index} 
+                  isVisible={teamInView}
+                  isDark={isDark}
+                  hoverHint={t('about.hoverHint')}
+                />
+              );
+            })}
           </div>
         </div>
       </section>
@@ -584,14 +538,14 @@ const AboutPage = ({ isDark = false }) => {
         {/* Content */}
         <div className="relative z-10 max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-            พร้อมที่จะร่วมงานกับเราหรือยัง?
+            {t('about.ctaTitle')}
           </h2>
           <p className="text-white/70 text-lg md:text-xl mb-10 max-w-2xl mx-auto">
-            ติดต่อเราเพื่อรับคำปรึกษาฟรี ไม่มีค่าใช้จ่าย เราพร้อมสร้างบ้านในฝันของคุณให้เป็นจริง
+            {t('about.ctaSubtitle')}
           </p>
           <button className="group relative bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-12 py-5 rounded-full font-bold text-lg transition-all transform hover:scale-105 shadow-2xl shadow-orange-500/40 animate-pulse-glow">
             <span className="relative z-10 flex items-center gap-2">
-              ติดต่อเรา
+              {t('about.ctaButton')}
               <Phone className="w-5 h-5 group-hover:rotate-12 transition-transform" />
             </span>
           </button>

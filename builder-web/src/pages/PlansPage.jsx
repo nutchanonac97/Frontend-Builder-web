@@ -4,10 +4,11 @@ import {
   Bed, Bath, Layers, Maximize2, ArrowRight, Phone, Sparkles,
   X, Search, ChevronDown, SlidersHorizontal
 } from 'lucide-react';
-import housePlans, { budgetCategories, floorOptions, sizeRanges, styleOptions } from '../data/housePlansData';
+import housePlans, { sizeRanges } from '../data/housePlansData';
+import { useLanguage } from '../i18n/LanguageContext';
 
 // ─── Plan Card ───
-const PlanCard = ({ plan, isDark, index }) => {
+const PlanCard = ({ plan, isDark, index, t }) => {
   const [ref, setRef] = useState(null);
   const [inView, setInView] = useState(false);
 
@@ -60,7 +61,7 @@ const PlanCard = ({ plan, isDark, index }) => {
           <div className="absolute bottom-3 left-4 right-4 flex gap-3 text-white/90 text-xs">
             <span className="flex items-center gap-1"><Bed size={12} /> {plan.bedrooms}</span>
             <span className="flex items-center gap-1"><Bath size={12} /> {plan.bathrooms}</span>
-            <span className="flex items-center gap-1"><Layers size={12} /> {plan.floors} ชั้น</span>
+            <span className="flex items-center gap-1"><Layers size={12} /> {plan.floors} {t('plans.floor')}</span>
             <span className="flex items-center gap-1"><Maximize2 size={12} /> {plan.sizeLabel}</span>
           </div>
           
@@ -68,7 +69,7 @@ const PlanCard = ({ plan, isDark, index }) => {
           <div className="absolute inset-0 bg-orange-500/0 group-hover:bg-orange-500/10 transition-colors duration-300 flex items-center justify-center">
             <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-100 scale-75">
               <div className="bg-white/90 backdrop-blur-sm text-slate-900 px-6 py-3 rounded-full font-bold flex items-center gap-2 shadow-xl">
-                ดูรายละเอียด <ArrowRight size={16} />
+                {t('plans.viewDetails')} <ArrowRight size={16} />
               </div>
             </div>
           </div>
@@ -183,6 +184,8 @@ const FilterPill = ({ label, onRemove, isDark }) => (
 
 // ─── Main Page ───
 const PlansPage = ({ isDark = false }) => {
+  const { t } = useLanguage();
+
   // Filter state
   const [selectedBudgets, setSelectedBudgets] = useState([]);
   const [selectedFloors, setSelectedFloors] = useState([]);
@@ -192,6 +195,30 @@ const PlansPage = ({ isDark = false }) => {
   const [sortBy, setSortBy] = useState('default');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
+  // Get translated filter options & plan data
+  const trBudgetCats = t('plans.budgetCategories') || [];
+  const trFloorOpts = t('plans.floorOptions') || [];
+  const trSizeRanges = t('plans.sizeRanges') || [];
+  const trStyleOpts = t('plans.styleOptions') || [];
+  const trCategoryCards = t('plans.categoryCards') || [];
+
+  // Merge static data from housePlansData with translated text
+  const translatedPlans = useMemo(() => {
+    const plans = t('plans.housePlans') || [];
+    return housePlans.map((plan, i) => {
+      const tr = plans[i] || {};
+      return {
+        ...plan,
+        title: tr.title || plan.title,
+        priceLabel: tr.priceLabel || plan.priceLabel,
+        sizeLabel: tr.sizeLabel || plan.sizeLabel,
+        style: tr.style || plan.style,
+        description: tr.description || plan.description,
+        tags: tr.tags || plan.tags,
+      };
+    });
+  }, [t]);
+
   // Toggle filter helpers
   const toggleFilter = (arr, setArr, value) => {
     setArr(prev => prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]);
@@ -199,7 +226,7 @@ const PlansPage = ({ isDark = false }) => {
 
   // Filter logic
   const filteredPlans = useMemo(() => {
-    let result = housePlans;
+    let result = translatedPlans;
     
     // Search
     if (searchQuery.trim()) {
@@ -208,7 +235,7 @@ const PlansPage = ({ isDark = false }) => {
         p.title.toLowerCase().includes(q) || 
         p.description.toLowerCase().includes(q) ||
         p.style.toLowerCase().includes(q) ||
-        p.tags.some(t => t.toLowerCase().includes(q))
+        p.tags.some(tg => tg.toLowerCase().includes(q))
       );
     }
     
@@ -232,9 +259,13 @@ const PlansPage = ({ isDark = false }) => {
       });
     }
     
-    // Style
+    // Style (filter by slug from the original data)
     if (selectedStyles.length > 0) {
-      result = result.filter(p => selectedStyles.includes(p.style));
+      result = result.filter(p => {
+        // match against the original (Thai) style from housePlansData
+        const origPlan = housePlans.find(hp => hp.id === p.id);
+        return origPlan && selectedStyles.includes(origPlan.style);
+      });
     }
     
     // Sort
@@ -243,7 +274,7 @@ const PlansPage = ({ isDark = false }) => {
     if (sortBy === 'size-desc') result = [...result].sort((a, b) => b.size - a.size);
     
     return result;
-  }, [searchQuery, selectedBudgets, selectedFloors, selectedSizes, selectedStyles, sortBy]);
+  }, [searchQuery, selectedBudgets, selectedFloors, selectedSizes, selectedStyles, sortBy, translatedPlans]);
 
   // Count plans per filter option
   const countForBudget = (slug) => housePlans.filter(p => p.budgetCategory === slug).length;
@@ -266,16 +297,23 @@ const PlansPage = ({ isDark = false }) => {
 
   // Active filter labels for pills
   const activeFilterPills = [
-    ...selectedBudgets.map(s => ({ key: `b-${s}`, label: budgetCategories.find(c => c.slug === s)?.label, remove: () => toggleFilter(selectedBudgets, setSelectedBudgets, s) })),
-    ...selectedFloors.map(f => ({ key: `f-${f}`, label: floorOptions.find(o => o.value === f)?.label, remove: () => toggleFilter(selectedFloors, setSelectedFloors, f) })),
-    ...selectedSizes.map(s => ({ key: `s-${s}`, label: sizeRanges.find(r => r.slug === s)?.label, remove: () => toggleFilter(selectedSizes, setSelectedSizes, s) })),
-    ...selectedStyles.map(s => ({ key: `st-${s}`, label: styleOptions.find(o => o.slug === s)?.label, remove: () => toggleFilter(selectedStyles, setSelectedStyles, s) })),
+    ...selectedBudgets.map(s => ({ key: `b-${s}`, label: trBudgetCats.find(c => c.slug === s)?.label, remove: () => toggleFilter(selectedBudgets, setSelectedBudgets, s) })),
+    ...selectedFloors.map(f => ({ key: `f-${f}`, label: trFloorOpts.find(o => o.value === f)?.label, remove: () => toggleFilter(selectedFloors, setSelectedFloors, f) })),
+    ...selectedSizes.map(s => ({ key: `s-${s}`, label: trSizeRanges.find(r => r.slug === s)?.label, remove: () => toggleFilter(selectedSizes, setSelectedSizes, s) })),
+    ...selectedStyles.map(s => ({ key: `st-${s}`, label: trStyleOpts.find(o => o.slug === s)?.label, remove: () => toggleFilter(selectedStyles, setSelectedStyles, s) })),
   ];
 
   // Scroll to top on filter change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [selectedBudgets, selectedFloors, selectedSizes, selectedStyles]);
+
+  // Category card configs (budget slug + gradient + image)
+  const categoryCardConfigs = [
+    { slug: 'under5m', image: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600&q=80', gradient: 'from-emerald-600/80 to-emerald-900/90' },
+    { slug: '5to10m', image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600&q=80', gradient: 'from-orange-600/80 to-orange-900/90' },
+    { slug: 'over10m', image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&q=80', gradient: 'from-violet-600/80 to-violet-900/90' },
+  ];
 
   // ─── Sidebar content (shared for desktop & mobile) ───
   const renderSidebar = () => (
@@ -288,7 +326,7 @@ const PlansPage = ({ isDark = false }) => {
           <Search size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${isDark ? 'text-slate-500' : 'text-gray-400'}`} />
           <input
             type="text"
-            placeholder="ค้นหาแบบบ้าน..."
+            placeholder={t('plans.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className={`w-full pl-10 pr-4 py-3 text-sm bg-transparent outline-none ${
@@ -304,14 +342,14 @@ const PlansPage = ({ isDark = false }) => {
           onClick={clearAllFilters}
           className="text-xs text-orange-500 hover:text-orange-400 font-medium mb-3 flex items-center gap-1"
         >
-          <X size={12} /> ล้าง filter ทั้งหมด
+          <X size={12} /> {t('plans.clearAll')}
         </button>
       )}
 
       {/* Budget */}
-      <FilterSection title="งบประมาณ" icon={<span className="text-orange-500">฿</span>} isDark={isDark} defaultOpen={true}>
+      <FilterSection title={t('plans.filterSections.budget')} icon={<span className="text-orange-500">฿</span>} isDark={isDark} defaultOpen={true}>
         <div className="space-y-0.5">
-          {budgetCategories.filter(c => c.slug !== 'all').map(cat => (
+          {trBudgetCats.map(cat => (
             <FilterCheckbox
               key={cat.slug}
               label={cat.label}
@@ -325,9 +363,9 @@ const PlansPage = ({ isDark = false }) => {
       </FilterSection>
 
       {/* Floors */}
-      <FilterSection title="จำนวนชั้น" icon={<Layers size={14} className="text-orange-500" />} isDark={isDark} defaultOpen={true}>
+      <FilterSection title={t('plans.filterSections.floors')} icon={<Layers size={14} className="text-orange-500" />} isDark={isDark} defaultOpen={true}>
         <div className="space-y-0.5">
-          {floorOptions.map(opt => (
+          {trFloorOpts.map(opt => (
             <FilterCheckbox
               key={opt.value}
               label={opt.label}
@@ -341,9 +379,9 @@ const PlansPage = ({ isDark = false }) => {
       </FilterSection>
 
       {/* Size */}
-      <FilterSection title="ขนาดพื้นที่" icon={<Maximize2 size={14} className="text-orange-500" />} isDark={isDark} defaultOpen={true}>
+      <FilterSection title={t('plans.filterSections.size')} icon={<Maximize2 size={14} className="text-orange-500" />} isDark={isDark} defaultOpen={true}>
         <div className="space-y-0.5">
-          {sizeRanges.map(range => (
+          {trSizeRanges.map(range => (
             <FilterCheckbox
               key={range.slug}
               label={range.label}
@@ -357,9 +395,9 @@ const PlansPage = ({ isDark = false }) => {
       </FilterSection>
 
       {/* Style */}
-      <FilterSection title="สไตล์บ้าน" icon={<Sparkles size={14} className="text-orange-500" />} isDark={isDark} defaultOpen={false}>
+      <FilterSection title={t('plans.filterSections.style')} icon={<Sparkles size={14} className="text-orange-500" />} isDark={isDark} defaultOpen={false}>
         <div className="space-y-0.5">
-          {styleOptions.map(opt => (
+          {trStyleOpts.map(opt => (
             <FilterCheckbox
               key={opt.slug}
               label={opt.label}
@@ -385,52 +423,28 @@ const PlansPage = ({ isDark = false }) => {
           <div className="flex items-end justify-between mb-6">
             <div>
               <h1 className={`text-2xl md:text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                แบบบ้าน<span className="text-orange-500">ทั้งหมด</span>
+                {t('plans.pageTitle1')}<span className="text-orange-500">{t('plans.pageTitle2')}</span>
               </h1>
               <p className={`text-sm mt-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                เลือกหมวดหมู่เพื่อค้นหาแบบบ้านที่ใช่
+                {t('plans.pageSubtitle')}
               </p>
             </div>
             <div className={`hidden sm:flex items-center gap-4 text-sm ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-              <span>🏠 <strong className={isDark ? 'text-white' : 'text-slate-700'}>{housePlans.length}</strong> แบบ</span>
+              <span>🏠 <strong className={isDark ? 'text-white' : 'text-slate-700'}>{housePlans.length}</strong> {t('plans.plansUnit')}</span>
               <span>·</span>
-              <span>⭐ สร้างแล้ว <strong className={isDark ? 'text-white' : 'text-slate-700'}>500+</strong> หลัง</span>
+              <span>⭐ {t('plans.builtCount')} <strong className={isDark ? 'text-white' : 'text-slate-700'}>500+</strong> {t('plans.builtUnit')}</span>
             </div>
           </div>
 
           {/* Category Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[
-              { 
-                slug: 'under5m', 
-                title: 'ไม่เกิน 5 ล้าน', 
-                subtitle: 'เริ่มต้นชีวิตใหม่',
-                image: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=600&q=80',
-                count: countForBudget('under5m'),
-                gradient: 'from-emerald-600/80 to-emerald-900/90'
-              },
-              { 
-                slug: '5to10m', 
-                title: '5-10 ล้าน', 
-                subtitle: 'คุณภาพระดับพรีเมียม',
-                image: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=600&q=80',
-                count: countForBudget('5to10m'),
-                gradient: 'from-orange-600/80 to-orange-900/90'
-              },
-              { 
-                slug: 'over10m', 
-                title: '10 ล้านขึ้นไป', 
-                subtitle: 'ลักซ์ชัวรี่ ไม่จำกัด',
-                image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&q=80',
-                count: countForBudget('over10m'),
-                gradient: 'from-violet-600/80 to-violet-900/90'
-              },
-            ].map((cat) => {
-              const isSelected = selectedBudgets.includes(cat.slug);
+            {categoryCardConfigs.map((catConfig, idx) => {
+              const trCard = trCategoryCards[idx] || {};
+              const isSelected = selectedBudgets.includes(catConfig.slug);
               return (
                 <button
-                  key={cat.slug}
-                  onClick={() => toggleFilter(selectedBudgets, setSelectedBudgets, cat.slug)}
+                  key={catConfig.slug}
+                  onClick={() => toggleFilter(selectedBudgets, setSelectedBudgets, catConfig.slug)}
                   className={`group relative rounded-2xl overflow-hidden text-left transition-all duration-300 
                     ${isSelected 
                       ? 'ring-2 ring-orange-500 ring-offset-2 shadow-lg shadow-orange-500/20 scale-[1.02]' 
@@ -439,8 +453,8 @@ const PlansPage = ({ isDark = false }) => {
                 >
                   {/* Background Image */}
                   <div className="absolute inset-0">
-                    <img src={cat.image} alt={cat.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                    <div className={`absolute inset-0 bg-linear-to-r ${cat.gradient}`} />
+                    <img src={catConfig.image} alt={trCard.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                    <div className={`absolute inset-0 bg-linear-to-r ${catConfig.gradient}`} />
                   </div>
                   
                   {/* Content */}
@@ -455,13 +469,13 @@ const PlansPage = ({ isDark = false }) => {
                     )}
                     
                     <span className="text-white/70 text-xs font-medium tracking-wide uppercase mb-1">
-                      {cat.subtitle}
+                      {trCard.subtitle}
                     </span>
                     <span className="text-white text-xl sm:text-2xl font-bold">
-                      {cat.title}
+                      {trCard.title}
                     </span>
                     <span className="text-white/60 text-xs mt-1.5">
-                      {cat.count} แบบบ้าน
+                      {countForBudget(catConfig.slug)} {trCard.countLabel}
                     </span>
                   </div>
                 </button>
@@ -486,7 +500,7 @@ const PlansPage = ({ isDark = false }) => {
               }`}
             >
               <SlidersHorizontal size={16} />
-              ตัวกรอง {hasActiveFilters ? `(${activeFilterPills.length})` : ''}
+              {t('plans.filterMobile')} {hasActiveFilters ? `(${activeFilterPills.length})` : ''}
             </button>
           </div>
 
@@ -501,7 +515,7 @@ const PlansPage = ({ isDark = false }) => {
                 isDark ? 'text-slate-400' : 'text-slate-500'
               }`}>
                 <SlidersHorizontal size={14} />
-                ตัวกรอง
+                {t('plans.filterTitle')}
               </h3>
               {renderSidebar()}
             </aside>
@@ -515,7 +529,7 @@ const PlansPage = ({ isDark = false }) => {
               }`}>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    พบ <span className={`font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{filteredPlans.length}</span> แบบบ้าน
+                    {t('plans.found')} <span className={`font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{filteredPlans.length}</span> {t('plans.plansCount')}
                   </span>
                   {activeFilterPills.map(pill => (
                     <FilterPill key={pill.key} label={pill.label} onRemove={pill.remove} isDark={isDark} />
@@ -532,10 +546,10 @@ const PlansPage = ({ isDark = false }) => {
                       : 'bg-gray-50 text-slate-600 border border-gray-200 focus:border-orange-400'
                   }`}
                 >
-                  <option value="default">เรียงตาม: แนะนำ</option>
-                  <option value="price-asc">ราคา: ต่ำ → สูง</option>
-                  <option value="price-desc">ราคา: สูง → ต่ำ</option>
-                  <option value="size-desc">ขนาด: ใหญ่ → เล็ก</option>
+                  <option value="default">{t('plans.sort.default')}</option>
+                  <option value="price-asc">{t('plans.sort.priceAsc')}</option>
+                  <option value="price-desc">{t('plans.sort.priceDesc')}</option>
+                  <option value="size-desc">{t('plans.sort.sizeDesc')}</option>
                 </select>
               </div>
 
@@ -543,23 +557,23 @@ const PlansPage = ({ isDark = false }) => {
               {filteredPlans.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {filteredPlans.map((plan, index) => (
-                    <PlanCard key={plan.id} plan={plan} isDark={isDark} index={index} />
+                    <PlanCard key={plan.id} plan={plan} isDark={isDark} index={index} t={t} />
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-20">
                   <div className="text-6xl mb-4">🏠</div>
                   <h3 className={`text-xl font-bold mb-2 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                    ไม่พบแบบบ้านที่ตรงกับตัวกรอง
+                    {t('plans.emptyTitle')}
                   </h3>
                   <p className={`mb-4 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                    ลองปรับเงื่อนไขการค้นหา หรือล้าง filter ทั้งหมด
+                    {t('plans.emptySubtitle')}
                   </p>
                   <button
                     onClick={clearAllFilters}
                     className="px-6 py-3 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-colors font-medium"
                   >
-                    ล้าง filter ทั้งหมด
+                    {t('plans.emptyClear')}
                   </button>
                 </div>
               )}
@@ -581,7 +595,7 @@ const PlansPage = ({ isDark = false }) => {
             isDark ? 'bg-slate-900' : 'bg-white'
           }`}>
             <div className="flex items-center justify-between mb-6">
-              <h3 className={`font-bold text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>ตัวกรอง</h3>
+              <h3 className={`font-bold text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('plans.filterTitle')}</h3>
               <button 
                 onClick={() => setIsMobileFilterOpen(false)}
                 className={`p-2 rounded-full transition-colors ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-gray-100 text-slate-500'}`}
@@ -595,7 +609,7 @@ const PlansPage = ({ isDark = false }) => {
                 onClick={() => setIsMobileFilterOpen(false)}
                 className="w-full py-3 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600 transition-colors"
               >
-                ดูผลลัพธ์ ({filteredPlans.length})
+                {t('plans.showResults')} ({filteredPlans.length})
               </button>
             </div>
           </div>
@@ -616,10 +630,10 @@ const PlansPage = ({ isDark = false }) => {
         
         <div className="max-w-4xl mx-auto text-center relative">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            สนใจแบบบ้านไหน? ปรึกษาฟรี!
+            {t('plans.cta.title')}
           </h2>
           <p className="text-white/80 mb-8 text-lg">
-            ทีมสถาปนิกของเรายินดีให้คำปรึกษา ปรับแบบ และประเมินงบให้ฟรี ไม่มีค่าใช้จ่าย
+            {t('plans.cta.subtitle')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
@@ -627,13 +641,13 @@ const PlansPage = ({ isDark = false }) => {
               className="inline-flex items-center justify-center gap-2 bg-white text-orange-600 px-8 py-4 rounded-full font-bold transition-all transform hover:scale-105 shadow-xl"
             >
               <Phone size={18} />
-              นัดหมายปรึกษาฟรี
+              {t('plans.cta.consult')}
             </Link>
             <Link 
               to="/portfolio"
               className="inline-flex items-center justify-center gap-2 border-2 border-white text-white px-8 py-4 rounded-full font-bold transition-all hover:bg-white/10"
             >
-              ดูผลงานจริง <ArrowRight size={18} />
+              {t('plans.cta.viewPortfolio')} <ArrowRight size={18} />
             </Link>
           </div>
         </div>

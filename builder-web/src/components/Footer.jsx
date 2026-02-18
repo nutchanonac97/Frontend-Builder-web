@@ -1,7 +1,10 @@
 import React from 'react';
 import { Phone, Mail, MapPin, Facebook, MessageCircle } from 'lucide-react';
+import { useLanguage } from '../i18n/LanguageContext';
 
 const Footer = () => {
+  const { t } = useLanguage();
+
   return (
     <footer className="bg-slate-900 text-white relative z-50">
       {/* Main Footer Content */}
@@ -21,15 +24,15 @@ const Footer = () => {
               </span>
             </div>
             <p className="text-slate-400 text-sm leading-relaxed mb-4">
-              บริษัท คริสตัล บริดจ์ จำกัด<br/>
-              รับสร้างบ้าน รีสอร์ท บ้านลอยน้ำ และอาคารพาณิชย์<br/>
-              ด้วยมาตรฐานคุณภาพระดับพรีเมียม
+              {t('footer.companyDesc1')}<br/>
+              {t('footer.companyDesc2')}<br/>
+              {t('footer.companyDesc3')}
             </p>
           </div>
 
           {/* Contact Info */}
           <div>
-            <h4 className="font-bold text-lg mb-6 text-white uppercase tracking-wider">ติดต่อเรา</h4>
+            <h4 className="font-bold text-lg mb-6 text-white uppercase tracking-wider">{t('footer.contactTitle')}</h4>
             <ul className="space-y-4 text-slate-400 text-sm">
               <li className="flex items-center gap-3 hover:text-orange-500 transition-colors cursor-pointer">
                 <Phone size={18} className="text-orange-500" />
@@ -48,11 +51,11 @@ const Footer = () => {
 
           {/* Social Media */}
           <div>
-            <h4 className="font-bold text-lg mb-6 text-white uppercase tracking-wider">Social Media</h4>
+            <h4 className="font-bold text-lg mb-6 text-white uppercase tracking-wider">{t('footer.socialTitle')}</h4>
             <ul className="space-y-4 text-slate-400 text-sm">
               <li className="flex items-center gap-3 hover:text-orange-500 transition-colors cursor-pointer">
                 <Facebook size={18} className="text-orange-500" />
-                <span>คริสตัล บริดจ์ รับสร้างบ้าน</span>
+                <span>{t('footer.facebookName')}</span>
               </li>
               <li className="flex items-center gap-3 hover:text-orange-500 transition-colors cursor-pointer">
                 <MessageCircle size={18} className="text-orange-500" />
@@ -67,7 +70,7 @@ const Footer = () => {
 
           {/* Other Links */}
           <div>
-            <h4 className="font-bold text-lg mb-6 text-white uppercase tracking-wider">ID & Links</h4>
+            <h4 className="font-bold text-lg mb-6 text-white uppercase tracking-wider">{t('footer.linksTitle')}</h4>
             <ul className="space-y-4 text-slate-400 text-sm">
               <li className="flex items-center gap-3">
                 <span className="text-orange-500 font-mono">ID:</span>
@@ -81,7 +84,7 @@ const Footer = () => {
             
             {/* CTA Button */}
             <button className="mt-6 w-full bg-orange-600 hover:bg-orange-700 text-white py-3 px-6 rounded-full font-bold transition-all transform hover:scale-105 shadow-lg shadow-orange-600/30">
-              ขอใบเสนอราคา
+              {t('footer.requestQuote')}
             </button>
           </div>
 
@@ -93,11 +96,11 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-slate-500 text-sm">
-              © 2026 Crystal Bridge Co., Ltd. สงวนลิขสิทธิ์ทุกประการ
+              {t('footer.copyright')}
             </p>
             <div className="flex gap-6 text-slate-500 text-sm">
-              <a href="#" className="hover:text-orange-500 transition-colors">นโยบายความเป็นส่วนตัว</a>
-              <a href="#" className="hover:text-orange-500 transition-colors">ข้อกำหนดการใช้งาน</a>
+              <a href="#" className="hover:text-orange-500 transition-colors">{t('footer.privacy')}</a>
+              <a href="#" className="hover:text-orange-500 transition-colors">{t('footer.terms')}</a>
             </div>
           </div>
         </div>
