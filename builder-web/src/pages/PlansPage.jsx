@@ -209,6 +209,8 @@ const PlansPage = ({ isDark = false }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('default');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const ITEMS_PER_PAGE = 12;
+  const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
   // Scroll state for floating filter button
   const [showFilterFAB, setShowFilterFAB] = useState(false);
@@ -248,6 +250,7 @@ const PlansPage = ({ isDark = false }) => {
   // Toggle filter helpers
   const toggleFilter = (arr, setArr, value) => {
     setArr(prev => prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value]);
+    setVisibleCount(ITEMS_PER_PAGE);
   };
 
   // Filter logic
@@ -319,6 +322,7 @@ const PlansPage = ({ isDark = false }) => {
     setSelectedSizes([]);
     setSelectedStyles([]);
     setSearchQuery('');
+    setVisibleCount(ITEMS_PER_PAGE);
   };
 
   // Active filter labels for pills
@@ -582,11 +586,35 @@ const PlansPage = ({ isDark = false }) => {
 
               {/* ─── Cards Grid ─── */}
               {filteredPlans.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filteredPlans.map((plan, index) => (
-                    <PlanCard key={plan.id} plan={plan} isDark={isDark} index={index} t={t} />
-                  ))}
-                </div>
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {filteredPlans.slice(0, visibleCount).map((plan, index) => (
+                      <PlanCard key={plan.id} plan={plan} isDark={isDark} index={index % ITEMS_PER_PAGE} t={t} />
+                    ))}
+                  </div>
+
+                  {/* Load More */}
+                  {visibleCount < filteredPlans.length && (
+                    <div className="flex flex-col items-center mt-10 gap-3">
+                      <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                        {t('plans.showing') || 'แสดง'} {Math.min(visibleCount, filteredPlans.length)} {t('plans.of') || 'จาก'} {filteredPlans.length} {t('plans.items') || 'แบบ'}
+                      </p>
+                      <button
+                        onClick={() => setVisibleCount(prev => prev + ITEMS_PER_PAGE)}
+                        className="px-8 py-3 rounded-full bg-orange-500 text-white font-bold hover:bg-orange-600 hover:scale-105 transition-all shadow-lg shadow-orange-500/20"
+                      >
+                        {t('plans.loadMore') || 'โหลดเพิ่มเติม'} ({filteredPlans.length - visibleCount} {t('plans.remaining') || 'แบบที่เหลือ'})
+                      </button>
+                    </div>
+                  )}
+
+                  {/* All loaded indicator */}
+                  {visibleCount >= filteredPlans.length && filteredPlans.length > ITEMS_PER_PAGE && (
+                    <p className={`text-center mt-8 text-sm ${isDark ? 'text-slate-500' : 'text-gray-400'}`}>
+                      {t('plans.allLoaded') || `แสดงทั้งหมด ${filteredPlans.length} แบบแล้ว`}
+                    </p>
+                  )}
+                </>
               ) : (
                 <div className="text-center py-20">
                   <div className="text-6xl mb-4">🏠</div>
