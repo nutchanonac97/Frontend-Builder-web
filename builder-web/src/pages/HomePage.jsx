@@ -1,9 +1,10 @@
 import React, { useRef, useState, Suspense, useCallback, useEffect, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Environment } from '@react-three/drei';
+import { Environment, OrbitControls } from '@react-three/drei';
 import { Phone, Mail, X, ChevronRight, Home, Building, Waves, Hotel, MessageCircle } from 'lucide-react';
 import * as THREE from 'three';
 import LoadingScreen from '../components/LoadingScreen';
+import FloatingHouse from '../components/FloatingHouse';
 
 const Moon = ({ isDark }) => {
   const moonRef = useRef();
@@ -997,14 +998,38 @@ const ModernHouse = ({ isDark }) => {
 };
 
 // --- Bottom Menu Component ---
-const BottomMenu = ({ activePanel, onButtonClick }) => {
+const BottomMenu = ({ activePanel, onButtonClick, houseType, onHouseTypeChange }) => {
   const buttons = [
     { id: 'houses', label: 'แบบบ้าน', icon: <Home size={18} />, color: 'bg-blue-500', shadow: 'shadow-blue-500/30' },
     { id: 'line', label: 'Line Official', icon: <MessageCircle size={18} />, color: 'bg-green-500', shadow: 'shadow-green-500/30' },
   ];
 
+  const houseTypes = [
+    { id: 'modern', label: 'บ้านปกติ', icon: <Home size={16} />, color: 'bg-purple-500' },
+    { id: 'floating', label: 'บ้านลอยน้ำ', icon: <Waves size={16} />, color: 'bg-cyan-500' },
+  ];
+
   return (
-    <div className="fixed bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-50 w-auto">
+    <div className="fixed bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-3 items-center">
+      {/* House Type Switcher */}
+      <div className="flex items-center gap-2 p-2 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl">
+        {houseTypes.map((type) => (
+          <button
+            key={type.id}
+            onClick={() => onHouseTypeChange(type.id)}
+            className={`
+              flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm text-white 
+              transition-all duration-300 transform
+              ${houseType === type.id ? `${type.color} scale-105 shadow-lg ring-2 ring-white/50` : 'hover:bg-white/10 hover:scale-105'}
+            `}
+          >
+            {type.icon}
+            <span className="hidden md:inline">{type.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Original Bottom Menu */}
       <div className="flex items-center gap-3 p-2.5 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl">
         {buttons.map((btn) => {
           const isActive = activePanel === btn.id;
@@ -1170,6 +1195,7 @@ const HeroContent = ({ isDark }) => {
 const HomePage = ({ isDark }) => {
   const [activePanel, setActivePanel] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [houseType, setHouseType] = useState('modern'); // 'modern' or 'floating'
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -1267,14 +1293,31 @@ const HomePage = ({ isDark }) => {
 
             <Environment preset={isDark ? "night" : "sunset"} background={false} />
 
-            <ModernHouse isDark={isDark} />
+            {/* OrbitControls for mouse interaction */}
+            <OrbitControls
+              enablePan={true}
+              enableZoom={true}
+              enableRotate={true}
+              minDistance={5}
+              maxDistance={20}
+              maxPolarAngle={Math.PI / 2}
+            />
+
+            {/* Show only selected house type */}
+            {houseType === 'modern' && <ModernHouse isDark={isDark} />}
+            {houseType === 'floating' && <FloatingHouse position={[0, -1.5, 0]} isDark={isDark} />}
           </Suspense>
         </Canvas>
       </div>
 
       <HeroContent isDark={isDark} />
 
-      <BottomMenu activePanel={activePanel} onButtonClick={handleToggle} />
+      <BottomMenu
+        activePanel={activePanel}
+        onButtonClick={handleToggle}
+        houseType={houseType}
+        onHouseTypeChange={setHouseType}
+      />
 
       <InfoPanel
         type={activePanel}
