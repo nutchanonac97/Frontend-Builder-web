@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Users, Award, Target, Heart, ChevronDown, Linkedin, Mail, Phone, Calendar, Building, TrendingUp, CheckCircle } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
+import usePageMeta from '../hooks/usePageMeta';
 
 // ===== STATIC DATA (non-translatable parts) =====
 const statConfigs = [
@@ -189,7 +190,7 @@ const TeamCard = ({ member, gradient, index, isVisible, isDark, hoverHint }) => 
   
   return (
     <div 
-      className="perspective-1000 h-80"
+      className="perspective-1000 h-80 cursor-pointer"
       style={{
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? 'translateY(0)' : 'translateY(40px)',
@@ -197,6 +198,7 @@ const TeamCard = ({ member, gradient, index, isVisible, isDark, hoverHint }) => 
       }}
       onMouseEnter={() => setIsFlipped(true)}
       onMouseLeave={() => setIsFlipped(false)}
+      onClick={() => setIsFlipped(prev => !prev)}
     >
       <div 
         className="relative w-full h-full transition-transform duration-700"
@@ -266,6 +268,7 @@ const TeamCard = ({ member, gradient, index, isVisible, isDark, hoverHint }) => 
 // ===== MAIN COMPONENT =====
 const AboutPage = ({ isDark = false }) => {
   const { t } = useLanguage();
+  usePageMeta(t('about.heroBadge'), t('about.heroSubtitle'));
   const [heroRef, heroInView] = useInView();
   const [timelineRef, timelineInView] = useInView();
   const [valuesRef, valuesInView] = useInView();
@@ -283,7 +286,7 @@ const AboutPage = ({ isDark = false }) => {
     const handleScroll = () => {
       setParallaxOffset(window.scrollY * 0.3);
     };
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 

@@ -6,11 +6,13 @@ import {
 } from 'lucide-react';
 import housePlans, { sizeRanges } from '../data/housePlansData';
 import { useLanguage } from '../i18n/LanguageContext';
+import usePageMeta from '../hooks/usePageMeta';
 
 // ─── Plan Card ───
 const PlanCard = ({ plan, isDark, index, t }) => {
   const [ref, setRef] = useState(null);
   const [inView, setInView] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
 
   useEffect(() => {
     if (!ref) return;
@@ -35,11 +37,23 @@ const PlanCard = ({ plan, isDark, index, t }) => {
       }`}>
         {/* Image */}
         <div className="relative aspect-4/3 overflow-hidden">
+          {/* Skeleton placeholder */}
+          {!imgLoaded && (
+            <div className={`absolute inset-0 animate-pulse ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}>
+              <div className="w-full h-full flex items-center justify-center">
+                <svg className={`w-10 h-10 ${isDark ? 'text-slate-600' : 'text-slate-300'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
+                </svg>
+              </div>
+            </div>
+          )}
           <img
             src={plan.image}
             alt={plan.title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-110 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
             loading="lazy"
+            decoding="async"
+            onLoad={() => setImgLoaded(true)}
           />
           <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent" />
           
@@ -185,6 +199,7 @@ const FilterPill = ({ label, onRemove, isDark }) => (
 // ─── Main Page ───
 const PlansPage = ({ isDark = false }) => {
   const { t } = useLanguage();
+  usePageMeta(t('plans.pageTitle'), t('plans.pageSubtitle'));
 
   // Filter state
   const [selectedBudgets, setSelectedBudgets] = useState([]);
@@ -194,6 +209,17 @@ const PlansPage = ({ isDark = false }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('default');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+  // Scroll state for floating filter button
+  const [showFilterFAB, setShowFilterFAB] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowFilterFAB(window.scrollY > 600);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Get translated filter options & plan data
   const trBudgetCats = t('plans.budgetCategories') || [];
@@ -437,7 +463,7 @@ const PlansPage = ({ isDark = false }) => {
           </div>
 
           {/* Category Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="flex sm:grid sm:grid-cols-3 gap-4 overflow-x-auto sm:overflow-visible snap-x snap-mandatory scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 pb-2 sm:pb-0">
             {categoryCardConfigs.map((catConfig, idx) => {
               const trCard = trCategoryCards[idx] || {};
               const isSelected = selectedBudgets.includes(catConfig.slug);
@@ -446,6 +472,7 @@ const PlansPage = ({ isDark = false }) => {
                   key={catConfig.slug}
                   onClick={() => toggleFilter(selectedBudgets, setSelectedBudgets, catConfig.slug)}
                   className={`group relative rounded-2xl overflow-hidden text-left transition-all duration-300 
+                    min-w-[75%] sm:min-w-0 snap-start
                     ${isSelected 
                       ? 'ring-2 ring-orange-500 ring-offset-2 shadow-lg shadow-orange-500/20 scale-[1.02]' 
                       : 'hover:shadow-xl hover:-translate-y-1'
@@ -458,7 +485,7 @@ const PlansPage = ({ isDark = false }) => {
                   </div>
                   
                   {/* Content */}
-                  <div className="relative p-5 sm:p-6 flex flex-col justify-end min-h-[130px] sm:min-h-[150px]">
+                  <div className="relative p-5 sm:p-6 flex flex-col justify-end min-h-[120px] sm:min-h-[150px]">
                     {/* Selected indicator */}
                     {isSelected && (
                       <div className="absolute top-3 right-3 w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center shadow-lg">
@@ -471,7 +498,7 @@ const PlansPage = ({ isDark = false }) => {
                     <span className="text-white/70 text-xs font-medium tracking-wide uppercase mb-1">
                       {trCard.subtitle}
                     </span>
-                    <span className="text-white text-xl sm:text-2xl font-bold">
+                    <span className="text-white text-lg sm:text-2xl font-bold">
                       {trCard.title}
                     </span>
                     <span className="text-white/60 text-xs mt-1.5">
@@ -652,6 +679,22 @@ const PlansPage = ({ isDark = false }) => {
           </div>
         </div>
       </section>
+
+      {/* ─── Floating Filter Button (Mobile) ─── */}
+      {showFilterFAB && (
+        <button
+          onClick={() => setIsMobileFilterOpen(true)}
+          className="fixed bottom-22 right-5 lg:hidden z-40 w-12 h-12 rounded-full bg-orange-500 text-white shadow-lg shadow-orange-500/30 hover:bg-orange-600 hover:scale-110 transition-all flex items-center justify-center"
+          aria-label="Open filters"
+        >
+          <SlidersHorizontal size={20} />
+          {hasActiveFilters && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center shadow">
+              {activeFilterPills.length}
+            </span>
+          )}
+        </button>
+      )}
     </div>
   );
 };

@@ -191,7 +191,7 @@ const Navbar = ({ isDark, toggleTheme }) => {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="lg:hidden z-50 flex items-center gap-2">
+          <div className="lg:hidden z-50 flex items-center gap-1 ml-auto">
             {/* Mobile Language Toggle */}
             <button
               onClick={() => setLanguage(language === 'th' ? 'en' : 'th')}
@@ -217,7 +217,7 @@ const Navbar = ({ isDark, toggleTheme }) => {
               {isDark ? <Sun size={20} /> : <Moon size={20} />}
             </button>
             
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className={`p-2 ${isDark ? 'text-white' : 'text-slate-800'}`}>
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className={`w-10 h-10 flex items-center justify-center rounded-full ${isDark ? 'text-white' : 'text-slate-800'}`}>
                {isMenuOpen ? <X /> : <Menu />}
             </button>
           </div>
@@ -226,7 +226,7 @@ const Navbar = ({ isDark, toggleTheme }) => {
 
       {/* Mobile Menu Overlay */}
       {isMenuOpen && (
-        <div className={`lg:hidden absolute top-20 left-0 w-full border-t shadow-xl p-6 flex flex-col gap-4 animate-in slide-in-from-top-5 ${
+        <div className={`lg:hidden absolute top-16 left-0 w-full border-t shadow-xl p-4 sm:p-6 flex flex-col gap-2 sm:gap-4 animate-in slide-in-from-top-5 max-h-[calc(100dvh-4rem)] overflow-y-auto ${
           isDark 
             ? 'bg-slate-900 border-slate-700' 
             : 'bg-white border-gray-100'
@@ -236,7 +236,7 @@ const Navbar = ({ isDark, toggleTheme }) => {
                 key={link.path}
                 to={link.path} 
                 onClick={() => setIsMenuOpen(false)}
-                className={`text-lg font-medium py-2 border-b ${
+                className={`text-base sm:text-lg font-medium py-1.5 sm:py-2 border-b ${
                   isDark ? 'border-slate-700' : 'border-gray-50'
                 } ${
                   isActive(link.path) 
@@ -250,7 +250,11 @@ const Navbar = ({ isDark, toggleTheme }) => {
             <Link 
               to="/contact" 
               onClick={() => setIsMenuOpen(false)}
-              className="text-lg font-medium text-orange-500 py-2"
+              className={`text-base sm:text-lg font-medium py-1.5 sm:py-2 ${
+                isActive('/contact') 
+                  ? 'text-orange-500' 
+                  : isDark ? 'text-white' : 'text-slate-800'
+              }`}
             >
               {t('nav.contact')}
             </Link>

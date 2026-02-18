@@ -365,6 +365,13 @@ const en = {
     detailsPlaceholder: 'Tell us about your project...',
     submit: 'Submit',
     submitAlert: 'Thank you for contacting us! We will get back to you as soon as possible.',
+    validation: {
+      nameRequired: 'Please enter your name',
+      phoneRequired: 'Please enter your phone number',
+      phoneInvalid: 'Please enter a valid phone number',
+      emailInvalid: 'Please enter a valid email address',
+    },
+    successMessage: 'Thank you! We will get back to you shortly.',
   },
 
   // ─── Footer ───

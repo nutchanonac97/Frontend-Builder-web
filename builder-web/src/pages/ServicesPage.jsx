@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Building2, Home, Hotel, Waves, Store, Hammer, PenTool, ArrowRight, Phone, ChevronDown, Key, Sparkles, Shield, Users, Award, Clock, Check, ArrowDown, Play, Star } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
+import usePageMeta from '../hooks/usePageMeta';
 
 // ============ INTERSECTION OBSERVER HOOK ============
 
@@ -15,6 +16,7 @@ const useInView = (options = {}) => {
 
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return [ref, isInView];
@@ -77,7 +79,7 @@ const HeroSection = ({ onScrollDown, t }) => {
   const statsKeys = ['projects', 'experience', 'satisfaction', 'warranty'];
 
   return (
-    <section ref={heroRef} className="relative h-screen flex items-center justify-center overflow-hidden snap-start">
+    <section ref={heroRef} className="relative min-h-dvh flex items-center justify-center overflow-hidden snap-start">
       {/* Background Video/Image */}
       <div className="absolute inset-0">
         <video 
@@ -103,26 +105,26 @@ const HeroSection = ({ onScrollDown, t }) => {
           {t('services.hero.badge')}
         </div>
 
-        <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white mb-8 leading-tight">
+        <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-black text-white mb-6 md:mb-8 leading-tight">
           {t('services.hero.title1')}<br/>
           <span className="bg-gradient-to-r from-orange-400 via-amber-400 to-orange-500 bg-clip-text text-transparent">
             {t('services.hero.title2')}
           </span>
         </h1>
 
-        <p className="text-xl md:text-2xl text-white/70 max-w-2xl mx-auto mb-12 leading-relaxed">
+        <p className="text-base sm:text-xl md:text-2xl text-white/70 max-w-2xl mx-auto mb-8 md:mb-12 leading-relaxed">
           {t('services.hero.subtitle')}<br/>
           {t('services.hero.subtitle2')}
         </p>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto mb-16">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 max-w-3xl mx-auto mb-10 md:mb-16">
           {statsValues.map((value, index) => {
             const Icon = statsIcons[index];
             return (
-              <div key={index} className="text-center p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
-                <div className="text-3xl md:text-4xl font-black text-white mb-1">{value}</div>
-                <div className="text-sm text-white/50">{t(`services.stats.${statsKeys[index]}`)}</div>
+              <div key={index} className="text-center p-3 sm:p-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
+                <div className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-1">{value}</div>
+                <div className="text-xs sm:text-sm text-white/50">{t(`services.stats.${statsKeys[index]}`)}</div>
               </div>
             );
           })}
@@ -155,7 +157,7 @@ const ServiceSection = ({ service, serviceText, index, t }) => {
   return (
     <section 
       ref={sectionRef}
-      className="relative h-screen flex items-center overflow-hidden snap-start"
+      className="relative min-h-dvh flex items-center overflow-hidden snap-start py-20 md:py-0"
     >
       {/* Background Image */}
       <div className="absolute inset-0">
@@ -193,17 +195,17 @@ const ServiceSection = ({ service, serviceText, index, t }) => {
             </div>
 
             {/* Title */}
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 leading-tight">
+            <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 leading-tight">
               {serviceText.title}
             </h2>
 
             {/* Tagline */}
-            <p className={`text-xl md:text-2xl font-medium mb-6 bg-gradient-to-r ${service.gradient} bg-clip-text text-transparent`}>
+            <p className={`text-base sm:text-xl md:text-2xl font-medium mb-4 sm:mb-6 bg-gradient-to-r ${service.gradient} bg-clip-text text-transparent`}>
               {serviceText.tagline}
             </p>
 
             {/* Description */}
-            <p className="text-lg text-white/70 mb-8 leading-relaxed max-w-lg">
+            <p className="text-sm sm:text-lg text-white/70 mb-6 sm:mb-8 leading-relaxed max-w-lg">
               {serviceText.description}
             </p>
 
@@ -239,19 +241,19 @@ const ServiceSection = ({ service, serviceText, index, t }) => {
 
             {/* CTA Buttons */}
             <div className="flex flex-wrap gap-4">
-              <button className={`group px-8 py-4 rounded-full bg-gradient-to-r ${service.gradient} text-white font-bold text-lg hover:shadow-2xl hover:scale-105 transition-all flex items-center gap-3`}>
+              <button className={`group px-6 py-3 sm:px-8 sm:py-4 rounded-full bg-gradient-to-r ${service.gradient} text-white font-bold text-sm sm:text-lg hover:shadow-2xl hover:scale-105 transition-all flex items-center gap-2 sm:gap-3`}>
                 {t('services.section.viewWork')}
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
               </button>
-              <button className="px-8 py-4 rounded-full bg-white/10 backdrop-blur-sm border border-white/30 text-white font-bold text-lg hover:bg-white/20 transition-all flex items-center gap-3">
-                <Play className="w-5 h-5" />
+              <button className="px-6 py-3 sm:px-8 sm:py-4 rounded-full bg-white/10 backdrop-blur-sm border border-white/30 text-white font-bold text-sm sm:text-lg hover:bg-white/20 transition-all flex items-center gap-2 sm:gap-3">
+                <Play className="w-4 h-4 sm:w-5 sm:h-5" />
                 {t('services.section.watchVideo')}
               </button>
             </div>
           </div>
 
           {/* Image Card - Animate from opposite side */}
-          <div className={`${isEven ? 'md:order-2' : 'md:order-1'} flex justify-center transition-all duration-1000 delay-500 ${
+          <div className={`hidden md:flex ${isEven ? 'md:order-2' : 'md:order-1'} justify-center transition-all duration-1000 delay-500 ${
             isInView 
               ? 'opacity-100 translate-x-0 scale-100' 
               : isEven 
@@ -260,7 +262,7 @@ const ServiceSection = ({ service, serviceText, index, t }) => {
           }`}>
             <div className="relative">
               {/* Main Image Card */}
-              <div className={`w-80 h-[28rem] md:w-96 md:h-[32rem] rounded-3xl overflow-hidden shadow-2xl border-2 border-white/10`}>
+              <div className={`w-72 h-96 lg:w-96 lg:h-128 rounded-3xl overflow-hidden shadow-2xl border-2 border-white/10`}>
                 <img 
                   src={service.bgImage} 
                   alt={serviceText.title}
@@ -302,7 +304,7 @@ const ServiceSection = ({ service, serviceText, index, t }) => {
       </div>
 
       {/* Section Number */}
-      <div className={`absolute bottom-8 ${isEven ? 'left-8' : 'right-8'} text-[10rem] font-black text-white/5 leading-none`}>
+      <div className={`absolute bottom-8 ${isEven ? 'left-8' : 'right-8'} text-[5rem] md:text-[10rem] font-black text-white/5 leading-none`}>
         0{index + 1}
       </div>
     </section>
@@ -315,7 +317,7 @@ const CTASection = ({ t }) => {
   const [ctaRef, isInView] = useInView();
 
   return (
-    <section ref={ctaRef} className="relative h-screen flex items-center justify-center overflow-hidden snap-start">
+    <section ref={ctaRef} className="relative min-h-dvh flex items-center justify-center overflow-hidden snap-start py-20 md:py-0">
       {/* Background */}
       <div className="absolute inset-0">
         <img 
@@ -335,7 +337,7 @@ const CTASection = ({ t }) => {
           {t('services.cta.badge')}
         </div>
         
-        <h2 className="text-4xl md:text-6xl font-black text-white mb-6 leading-tight">
+        <h2 className="text-2xl sm:text-4xl md:text-6xl font-black text-white mb-6 leading-tight">
           {t('services.cta.title1')}<br/>{t('services.cta.title2')}
         </h2>
 
@@ -345,11 +347,11 @@ const CTASection = ({ t }) => {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <button className="group bg-white text-orange-600 px-10 py-5 rounded-full font-bold text-lg hover:bg-orange-50 transition-all hover:scale-105 shadow-2xl flex items-center justify-center gap-3">
+          <button className="group bg-white text-orange-600 px-8 py-4 sm:px-10 sm:py-5 rounded-full font-bold text-base sm:text-lg hover:bg-orange-50 transition-all hover:scale-105 shadow-2xl flex items-center justify-center gap-3">
             {t('services.cta.startProject')}
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </button>
-          <button className="border-2 border-white text-white px-10 py-5 rounded-full font-bold text-lg hover:bg-white/10 transition-all flex items-center justify-center gap-3">
+          <button className="border-2 border-white text-white px-8 py-4 sm:px-10 sm:py-5 rounded-full font-bold text-base sm:text-lg hover:bg-white/10 transition-all flex items-center justify-center gap-3">
             <Phone className="w-5 h-5" />
             {t('services.cta.phone')}
           </button>
@@ -375,9 +377,10 @@ const CTASection = ({ t }) => {
 
 // ============ MAIN COMPONENT ============
 
-const ServicesPage = ({ isDark = false }) => {
+const ServicesPage = () => {
   const containerRef = useRef(null);
   const { t } = useLanguage();
+  usePageMeta(t('services.heroTitle'), t('services.heroSubtitle'));
 
   // Get translated service items
   const serviceItems = t('services.items');
@@ -395,7 +398,7 @@ const ServicesPage = ({ isDark = false }) => {
   return (
     <div 
       ref={containerRef}
-      className="h-screen overflow-auto snap-y snap-mandatory scrollbar-hide"
+      className="h-dvh overflow-auto snap-y snap-proximity md:snap-mandatory scrollbar-hide"
       style={{ scrollBehavior: 'smooth' }}
       onScroll={(e) => {
         window.dispatchEvent(new CustomEvent('containerscroll', { detail: { scrollTop: e.target.scrollTop } }));

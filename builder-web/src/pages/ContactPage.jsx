@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Phone, Mail, MapPin, Clock, Send, MessageCircle } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, Send, MessageCircle, CheckCircle, AlertCircle } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
+import usePageMeta from '../hooks/usePageMeta';
 
 const ContactPage = ({ isDark = false }) => {
   const { t } = useLanguage();
+  usePageMeta(t('contact.heroTitle1') + t('contact.heroTitle2'), t('contact.heroSubtitle'));
 
   const [formData, setFormData] = useState({
     name: '',
@@ -14,13 +16,43 @@ const ContactPage = ({ isDark = false }) => {
     message: ''
   });
 
+  const [errors, setErrors] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+
   const trProjectTypes = t('contact.projectTypes') || [];
   const trBudgetOptions = t('contact.budgetOptions') || [];
 
+  const validate = () => {
+    const newErrors = {};
+    
+    if (!formData.name.trim()) {
+      newErrors.name = t('contact.validation.nameRequired');
+    }
+    
+    if (!formData.phone.trim()) {
+      newErrors.phone = t('contact.validation.phoneRequired');
+    } else if (!/^[0-9\s-]{9,15}$/.test(formData.phone.replace(/[\s-]/g, ''))) {
+      newErrors.phone = t('contact.validation.phoneInvalid');
+    }
+    
+    if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = t('contact.validation.emailInvalid');
+    }
+    
+    return newErrors;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    alert(t('contact.submitAlert'));
+    const newErrors = validate();
+    setErrors(newErrors);
+    
+    if (Object.keys(newErrors).length === 0) {
+      console.log('Form submitted:', formData);
+      setSubmitted(true);
+      setFormData({ name: '', phone: '', email: '', projectType: '', budget: '', message: '' });
+      setTimeout(() => setSubmitted(false), 5000);
+    }
   };
 
   const handleChange = (e) => {
@@ -28,27 +60,31 @@ const ContactPage = ({ isDark = false }) => {
       ...formData,
       [e.target.name]: e.target.value
     });
+    // Clear error when user types
+    if (errors[e.target.name]) {
+      setErrors({ ...errors, [e.target.name]: '' });
+    }
   };
 
   return (
     <div className={`min-h-screen transition-colors duration-500 ${isDark ? 'bg-slate-900' : 'bg-linear-to-b from-slate-50 to-slate-100'}`}>
       {/* Hero Section */}
-      <section className="pt-32 pb-16 px-6">
+      <section className="pt-24 sm:pt-32 pb-12 sm:pb-16 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto text-center">
           <div className={`inline-block px-4 py-2 rounded-full text-sm font-bold mb-6 ${isDark ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' : 'bg-orange-100 text-orange-800'}`}>
             {t('contact.heroBadge')}
           </div>
-          <h1 className={`text-4xl md:text-5xl font-bold mb-6 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+          <h1 className={`text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 ${isDark ? 'text-white' : 'text-slate-900'}`}>
             {t('contact.heroTitle1')}<span className="text-orange-600">{t('contact.heroTitle2')}</span>
           </h1>
-          <p className={`text-xl max-w-2xl mx-auto ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+          <p className={`text-base sm:text-xl max-w-2xl mx-auto ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
             {t('contact.heroSubtitle')}
           </p>
         </div>
       </section>
 
       {/* Contact Content */}
-      <section className="pb-20 px-6">
+      <section className="pb-20 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12">
             
@@ -119,6 +155,14 @@ const ContactPage = ({ isDark = false }) => {
               <h2 className={`text-2xl font-bold mb-6 ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('contact.formTitle')}</h2>
               
               <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Success Banner */}
+                {submitted && (
+                  <div className="flex items-center gap-3 p-4 rounded-xl bg-green-500/10 border border-green-500/30 text-green-500">
+                    <CheckCircle size={20} />
+                    <span className="font-medium text-sm">{t('contact.successMessage')}</span>
+                  </div>
+                )}
+
                 <div>
                   <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{t('contact.nameLabel')}</label>
                   <input
@@ -126,10 +170,10 @@ const ContactPage = ({ isDark = false }) => {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    required
-                    className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-orange-500' : 'border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20'}`}
+                    className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${errors.name ? 'border-red-500 focus:border-red-500' : isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-orange-500' : 'border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20'} ${isDark ? 'bg-slate-700 text-white placeholder-slate-400' : ''}`}
                     placeholder={t('contact.namePlaceholder')}
                   />
+                  {errors.name && <p className="mt-1.5 text-sm text-red-500 flex items-center gap-1"><AlertCircle size={14} /> {errors.name}</p>}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -140,10 +184,10 @@ const ContactPage = ({ isDark = false }) => {
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      required
-                      className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-orange-500' : 'border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20'}`}
+                      className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${errors.phone ? 'border-red-500 focus:border-red-500' : isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-orange-500' : 'border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20'} ${isDark ? 'bg-slate-700 text-white placeholder-slate-400' : ''}`}
                       placeholder="08x-xxx-xxxx"
                     />
+                    {errors.phone && <p className="mt-1.5 text-sm text-red-500 flex items-center gap-1"><AlertCircle size={14} /> {errors.phone}</p>}
                   </div>
                   <div>
                     <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>{t('contact.emailLabel')}</label>
@@ -152,9 +196,10 @@ const ContactPage = ({ isDark = false }) => {
                       name="email"
                       value={formData.email}
                       onChange={handleChange}
-                      className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-orange-500' : 'border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20'}`}
+                      className={`w-full px-4 py-3 rounded-xl border outline-none transition-all ${errors.email ? 'border-red-500 focus:border-red-500' : isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-orange-500' : 'border-slate-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20'} ${isDark ? 'bg-slate-700 text-white placeholder-slate-400' : ''}`}
                       placeholder="your@email.com"
                     />
+                    {errors.email && <p className="mt-1.5 text-sm text-red-500 flex items-center gap-1"><AlertCircle size={14} /> {errors.email}</p>}
                   </div>
                 </div>
 

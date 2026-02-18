@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, ChevronLeft, ChevronRight, MapPin, Calendar, Building2, ArrowRight, Play, Pause, ChevronsLeftRight } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
+import usePageMeta from '../hooks/usePageMeta';
 
 // Static project data (non-translatable parts)
 const projectsStatic = [
@@ -90,37 +91,34 @@ const BeforeAfterSlider = ({ beforeImage, afterImage, title, t }) => {
     setSliderPosition(percentage);
   }, []);
 
-  const handleMouseMove = useCallback((e) => {
-    if (isDragging) {
-      handleMove(e.clientX);
-    }
-  }, [isDragging, handleMove]);
-
-  const handleTouchMove = useCallback((e) => {
-    if (isDragging) {
-      handleMove(e.touches[0].clientX);
-    }
-  }, [isDragging, handleMove]);
-
   useEffect(() => {
-    if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', () => setIsDragging(false));
-      window.addEventListener('touchmove', handleTouchMove);
-      window.addEventListener('touchend', () => setIsDragging(false));
-    }
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', () => setIsDragging(false));
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchend', () => setIsDragging(false));
+    if (!isDragging) return;
+
+    const onMouseMove = (e) => handleMove(e.clientX);
+    const onTouchMove = (e) => {
+      e.preventDefault();
+      handleMove(e.touches[0].clientX);
     };
-  }, [isDragging, handleMouseMove, handleTouchMove]);
+    const stopDrag = () => setIsDragging(false);
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', stopDrag);
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchend', stopDrag);
+
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', stopDrag);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', stopDrag);
+    };
+  }, [isDragging, handleMove]);
 
   return (
     <div
       ref={containerRef}
       className="before-after-container aspect-video rounded-2xl"
+      style={{ touchAction: 'none' }}
       onMouseDown={() => setIsDragging(true)}
       onTouchStart={() => setIsDragging(true)}
     >
@@ -317,7 +315,7 @@ const FullScreenHero = ({ projects, onViewProject, t }) => {
       </div>
 
       {/* Scroll Indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce hidden md:block">
         <div className="w-6 h-10 rounded-full border-2 border-white/30 flex items-start justify-center p-2">
           <div className="w-1 h-2 bg-white/60 rounded-full animate-pulse" />
         </div>
@@ -384,7 +382,7 @@ const ProjectDetailModal = ({ project, onClose, isDark, t }) => {
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-white hover:bg-slate-700 transition-colors z-20"
+          className="absolute -top-2 -right-2 sm:(-top-2 -right-2) w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-white hover:bg-slate-700 transition-colors z-20"
         >
           <X size={20} />
         </button>
@@ -415,7 +413,7 @@ const ProjectDetailModal = ({ project, onClose, isDark, t }) => {
             </div>
 
             {/* Stats Grid - Compact */}
-            <div className="grid grid-cols-4 gap-3 mb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
               <div className="text-center p-3 rounded-xl bg-white/5">
                 <div className="text-white/50 text-xs mb-1">{t('portfolio.area')}</div>
                 <div className="text-white font-bold text-sm">{project.size}</div>
@@ -519,6 +517,7 @@ const ProjectCard = ({ project, onClick, index }) => {
 
 const PortfolioPage = ({ isDark = false }) => {
   const { t } = useLanguage();
+  usePageMeta(t('portfolio.heroTitle'), t('portfolio.heroSubtitle'));
   const [selectedCategoryIndex, setSelectedCategoryIndex] = useState(0);
   const [selectedProject, setSelectedProject] = useState(null);
 
@@ -596,7 +595,7 @@ const PortfolioPage = ({ isDark = false }) => {
               <button
                 key={idx}
                 onClick={() => setSelectedCategoryIndex(idx)}
-                className={`px-6 py-3 rounded-full font-medium transition-all duration-300 ${
+                className={`px-4 py-2 sm:px-6 sm:py-3 rounded-full font-medium text-sm sm:text-base transition-all duration-300 ${
                   selectedCategoryIndex === idx
                     ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30'
                     : 'glass text-white/70 hover:text-white hover:bg-white/10'

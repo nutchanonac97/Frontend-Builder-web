@@ -2,6 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import FloatingContact from './components/FloatingContact';
+import BackToTop from './components/BackToTop';
 import { LanguageProvider } from './i18n/LanguageContext';
 
 // Pages
@@ -11,6 +13,7 @@ import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import PortfolioPage from './pages/PortfolioPage';
 import PlansPage from './pages/PlansPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 function App() {
   const location = useLocation();
@@ -24,6 +27,7 @@ function App() {
   
   // หน้าแรกมี Footer อยู่ใน component แล้ว และใช้ ScrollControls
   const isHomePage = location.pathname === '/';
+
 
   // ซ่อน browser scrollbar เมื่ออยู่หน้าแรก (ScrollControls จัดการ scroll เอง)
   useEffect(() => {
@@ -41,22 +45,30 @@ function App() {
     };
   }, [isHomePage]);
 
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   return (
     <LanguageProvider>
     <div className="relative w-full min-h-screen">
       <Navbar isDark={isDark} toggleTheme={toggleTheme} />
       
       <Routes>
-        {/* หน้าแรก - 3D Scrollytelling Experience */}
-        <Route path="/" element={<HomePage isDark={isDark} />} />
-        
-        {/* หน้าอื่นๆ */}
-        <Route path="/services" element={<ServicesPage isDark={isDark} />} />
-        <Route path="/portfolio" element={<PortfolioPage isDark={isDark} />} />
-        <Route path="/about" element={<AboutPage isDark={isDark} />} />
-        <Route path="/plans" element={<PlansPage isDark={isDark} />} />
-        <Route path="/contact" element={<ContactPage isDark={isDark} />} />
-      </Routes>
+          {/* หน้าแรก - 3D Scrollytelling Experience */}
+          <Route path="/" element={<HomePage isDark={isDark} />} />
+          
+          {/* หน้าอื่นๆ */}
+          <Route path="/services" element={<ServicesPage isDark={isDark} />} />
+          <Route path="/portfolio" element={<PortfolioPage isDark={isDark} />} />
+          <Route path="/about" element={<AboutPage isDark={isDark} />} />
+          <Route path="/plans" element={<PlansPage isDark={isDark} />} />
+          <Route path="/contact" element={<ContactPage isDark={isDark} />} />
+
+          {/* 404 */}
+          <Route path="*" element={<NotFoundPage isDark={isDark} />} />
+        </Routes>
       
       {/* แสดง Footer - z-0 เพื่อให้ modal ที่มี z-50 ทับได้ */}
       {!isHomePage && location.pathname !== '/services' && (
@@ -64,6 +76,9 @@ function App() {
           <Footer />
         </div>
       )}
+
+      <FloatingContact />
+      <BackToTop />
     </div>
     </LanguageProvider>
   );
