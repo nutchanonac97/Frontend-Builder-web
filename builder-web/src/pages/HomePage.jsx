@@ -1,5 +1,6 @@
 import React, { useRef, useState, Suspense, useCallback, useEffect, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { useLanguage } from '../i18n/LanguageContext';
 import { Environment, OrbitControls } from '@react-three/drei';
 import { Phone, Mail, X, ChevronRight, Home, Building, Waves, Hotel, MessageCircle } from 'lucide-react';
 import * as THREE from 'three';
@@ -999,14 +1000,16 @@ const ModernHouse = ({ isDark }) => {
 
 // --- Bottom Menu Component ---
 const BottomMenu = ({ activePanel, onButtonClick, houseType, onHouseTypeChange }) => {
+  const { t } = useLanguage();
+
   const buttons = [
-    { id: 'houses', label: 'แบบบ้าน', icon: <Home size={18} />, color: 'bg-blue-500', shadow: 'shadow-blue-500/30' },
+    { id: 'houses', label: t('home.menu.housePlans'), icon: <Home size={18} />, color: 'bg-blue-500', shadow: 'shadow-blue-500/30' },
     { id: 'line', label: 'Line Official', icon: <MessageCircle size={18} />, color: 'bg-green-500', shadow: 'shadow-green-500/30' },
   ];
 
   const houseTypes = [
-    { id: 'modern', label: 'บ้านปกติ', icon: <Home size={16} />, color: 'bg-purple-500' },
-    { id: 'floating', label: 'บ้านลอยน้ำ', icon: <Waves size={16} />, color: 'bg-cyan-500' },
+    { id: 'modern', label: t('home.menu.normalHouse'), icon: <Home size={16} />, color: 'bg-purple-500' },
+    { id: 'floating', label: t('home.menu.floatingHouse'), icon: <Waves size={16} />, color: 'bg-cyan-500' },
   ];
 
   return (
@@ -1056,6 +1059,8 @@ const BottomMenu = ({ activePanel, onButtonClick, houseType, onHouseTypeChange }
 
 // --- Info Panel ---
 const InfoPanel = ({ type, isVisible, onClose }) => {
+  const { t } = useLanguage();
+
   const content = {
     line: {
       title: "Line Official",
@@ -1063,7 +1068,7 @@ const InfoPanel = ({ type, isVisible, onClose }) => {
       color: "bg-green-500",
       content: (
         <div className="space-y-4">
-          <p className="text-slate-600">แอดไลน์เพื่อรับโปรโมชั่นพิเศษและปรึกษาฟรี!</p>
+          <p className="text-slate-600">{t('home.panel.lineDesc')}</p>
           <div className="grid grid-cols-2 gap-3">
             {[
               { id: "@395fzoca", qr: "https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://line.me/R/ti/p/@395fzoca" },
@@ -1079,30 +1084,30 @@ const InfoPanel = ({ type, isVisible, onClose }) => {
       )
     },
     houses: {
-      title: "แบบบ้าน",
+      title: t('home.panel.housesTitle'),
       icon: <Home className="text-white" size={24} />,
       color: "bg-blue-500",
       content: (
         <div className="space-y-4">
-          <p className="text-slate-600">เลือกชมแบบบ้านที่ตรงใจคุณ</p>
+          <p className="text-slate-600">{t('home.panel.housesDesc')}</p>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { icon: Home, name: "บ้านพักอาศัย", count: "25+" },
-              { icon: Building, name: "อาคารพาณิชย์", count: "10+" },
-              { icon: Waves, name: "บ้านลอยน้ำ", count: "8+" },
-              { icon: Hotel, name: "รีสอร์ท", count: "12+" },
+              { icon: Home, name: t('home.panel.residential'), count: "25+" },
+              { icon: Building, name: t('home.panel.commercial'), count: "10+" },
+              { icon: Waves, name: t('home.panel.floating'), count: "8+" },
+              { icon: Hotel, name: t('home.panel.resort'), count: "12+" },
             ].map((item, i) => (
               <div key={i} className="p-3 bg-slate-50 rounded-xl hover:bg-blue-50 transition-colors cursor-pointer group">
                 <div className="w-8 h-8 bg-blue-100 group-hover:bg-blue-500 rounded-lg flex items-center justify-center mb-2 transition-colors">
                   <item.icon className="text-blue-600 group-hover:text-white transition-colors" size={16} />
                 </div>
                 <div className="font-medium text-slate-700 text-sm">{item.name}</div>
-                <div className="text-xs text-slate-400">{item.count} แบบ</div>
+                <div className="text-xs text-slate-400">{item.count} {t('home.panel.plansSuffix')}</div>
               </div>
             ))}
           </div>
           <button className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-bold transition-colors flex items-center justify-center gap-2">
-            ดูแบบบ้านทั้งหมด
+            {t('home.panel.viewAll')}
             <ChevronRight size={18} />
           </button>
         </div>
@@ -1141,50 +1146,51 @@ const InfoPanel = ({ type, isVisible, onClose }) => {
 
 // --- Hero Content ---
 const HeroContent = ({ isDark }) => {
+  const { t } = useLanguage();
+
   return (
     <div className="fixed left-6 md:left-16 top-1/2 -translate-y-1/2 z-20 max-w-md pointer-events-none">
       <div className={`backdrop-blur-xl p-8 rounded-3xl shadow-2xl border pointer-events-auto ${isDark ? 'bg-slate-900/80 border-slate-700' : 'bg-white/80 border-white/50'}`}>
         <div className="inline-block bg-gradient-to-r from-orange-500 to-amber-500 text-white px-4 py-2 rounded-full text-sm font-bold mb-4">
-          ✨ รับสร้างบ้าน 2026
+          {t('home.badge')}
         </div>
         <h1 className={`text-4xl md:text-5xl font-bold leading-tight mb-4 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-          สร้างบ้าน...<br />
+          {t('home.title1')}<br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500">
-            ที่บ่งบอกความเป็นคุณ
+            {t('home.title2')}
           </span>
         </h1>
         <p className={`leading-relaxed mb-6 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
-          บริการรับสร้างบ้านครบวงจร รีสอร์ท บ้านลอยน้ำ และอาคารพาณิชย์
-          ด้วยเทคโนโลยีทันสมัย ใส่ใจทุกรายละเอียด
+          {t('home.subtitle')}
         </p>
 
         <div className={`flex gap-6 mb-6 p-4 rounded-2xl ${isDark ? 'bg-slate-800' : 'bg-slate-900'} text-white`}>
           <div className="text-center">
             <div className="text-xl font-bold text-orange-400">50+</div>
-            <div className="text-xs text-slate-400">โครงการ</div>
+            <div className="text-xs text-slate-400">{t('home.stats.projects')}</div>
           </div>
           <div className="text-center">
             <div className="text-xl font-bold text-orange-400">20</div>
-            <div className="text-xs text-slate-400">ปีรับประกัน</div>
+            <div className="text-xs text-slate-400">{t('home.stats.warranty')}</div>
           </div>
           <div className="text-center">
             <div className="text-xl font-bold text-orange-400">100%</div>
-            <div className="text-xs text-slate-400">ลูกค้าพอใจ</div>
+            <div className="text-xs text-slate-400">{t('home.stats.satisfaction')}</div>
           </div>
         </div>
 
         <div className="space-y-3">
           <button className="w-full bg-gradient-to-r from-orange-600 to-amber-500 text-white px-8 py-4 rounded-xl font-bold hover:shadow-xl hover:shadow-orange-500/30 transition-all duration-300 flex items-center justify-center gap-2">
-            ดูแบบบ้าน
+            {t('home.viewPlans')}
             <ChevronRight size={20} />
           </button>
           <button className={`w-full px-8 py-4 rounded-xl font-bold transition-all duration-300 ${isDark ? 'bg-slate-700 text-white hover:bg-slate-600' : 'bg-slate-900 text-white hover:bg-slate-800'}`}>
-            ปรึกษาเรา
+            {t('home.consultUs')}
           </button>
         </div>
 
         <p className={`text-center text-sm mt-4 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-          🖱️ ลากเมาส์เพื่อหมุนดูบ้าน 3D
+          {t('home.dragHint')}
         </p>
       </div>
     </div>
