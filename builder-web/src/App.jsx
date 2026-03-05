@@ -5,6 +5,7 @@ import Footer from './components/Footer';
 import FloatingContact from './components/FloatingContact';
 import BackToTop from './components/BackToTop';
 import { LanguageProvider } from './i18n/LanguageContext';
+import { AuthProvider } from './contexts/AuthContext';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -14,17 +15,18 @@ import ContactPage from './pages/ContactPage';
 import PortfolioPage from './pages/PortfolioPage';
 import PlansPage from './pages/PlansPage';
 import NotFoundPage from './pages/NotFoundPage';
+import ConfigPage from './pages/ConfigPage';
 
 function App() {
   const location = useLocation();
-  
+
   // Dark mode state - lifted to App level for sharing
   const [isDark, setIsDark] = useState(true); // Default to dark mode
-  
+
   const toggleTheme = useCallback(() => {
     setIsDark(prev => !prev);
   }, []);
-  
+
   // หน้าแรกมี Footer อยู่ใน component แล้ว และใช้ ScrollControls
   const isHomePage = location.pathname === '/';
 
@@ -38,7 +40,7 @@ function App() {
       document.body.style.overflow = 'auto';
       document.documentElement.style.overflow = 'auto';
     }
-    
+
     return () => {
       document.body.style.overflow = 'auto';
       document.documentElement.style.overflow = 'auto';
@@ -52,34 +54,37 @@ function App() {
 
   return (
     <LanguageProvider>
-    <div className="relative w-full min-h-screen">
-      <Navbar isDark={isDark} toggleTheme={toggleTheme} />
-      
-      <Routes>
-          {/* หน้าแรก - 3D Scrollytelling Experience */}
-          <Route path="/" element={<HomePage isDark={isDark} />} />
-          
-          {/* หน้าอื่นๆ */}
-          <Route path="/services" element={<ServicesPage isDark={isDark} />} />
-          <Route path="/portfolio" element={<PortfolioPage isDark={isDark} />} />
-          <Route path="/about" element={<AboutPage isDark={isDark} />} />
-          <Route path="/plans" element={<PlansPage isDark={isDark} />} />
-          <Route path="/contact" element={<ContactPage isDark={isDark} />} />
+      <AuthProvider>
+        <div className="relative w-full min-h-screen">
+          <Navbar isDark={isDark} toggleTheme={toggleTheme} />
 
-          {/* 404 */}
-          <Route path="*" element={<NotFoundPage isDark={isDark} />} />
-        </Routes>
-      
-      {/* แสดง Footer - z-0 เพื่อให้ modal ที่มี z-50 ทับได้ */}
-      {!isHomePage && location.pathname !== '/services' && (
-        <div className="relative z-0">
-          <Footer />
+          <Routes>
+            {/* หน้าแรก - 3D Scrollytelling Experience */}
+            <Route path="/" element={<HomePage isDark={isDark} />} />
+
+            {/* หน้าอื่นๆ */}
+            <Route path="/services" element={<ServicesPage isDark={isDark} />} />
+            <Route path="/portfolio" element={<PortfolioPage isDark={isDark} />} />
+            <Route path="/about" element={<AboutPage isDark={isDark} />} />
+            <Route path="/plans" element={<PlansPage isDark={isDark} />} />
+            <Route path="/contact" element={<ContactPage isDark={isDark} />} />
+            <Route path="/config" element={<ConfigPage isDark={isDark} />} />
+
+            {/* 404 */}
+            <Route path="*" element={<NotFoundPage isDark={isDark} />} />
+          </Routes>
+
+          {/* แสดง Footer - z-0 เพื่อให้ modal ที่มี z-50 ทับได้ */}
+          {!isHomePage && location.pathname !== '/services' && (
+            <div className="relative z-0">
+              <Footer />
+            </div>
+          )}
+
+          <FloatingContact />
+          <BackToTop />
         </div>
-      )}
-
-      <FloatingContact />
-      <BackToTop />
-    </div>
+      </AuthProvider>
     </LanguageProvider>
   );
 }

@@ -24,34 +24,63 @@ const ContactPage = ({ isDark = false }) => {
 
   const validate = () => {
     const newErrors = {};
-    
+
     if (!formData.name.trim()) {
       newErrors.name = t('contact.validation.nameRequired');
     }
-    
+
     if (!formData.phone.trim()) {
       newErrors.phone = t('contact.validation.phoneRequired');
     } else if (!/^[0-9\s-]{9,15}$/.test(formData.phone.replace(/[\s-]/g, ''))) {
       newErrors.phone = t('contact.validation.phoneInvalid');
     }
-    
+
     if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = t('contact.validation.emailInvalid');
     }
-    
+
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState('');
+
+  const API_BASE = 'http://localhost:5213';
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validate();
     setErrors(newErrors);
-    
-    if (Object.keys(newErrors).length === 0) {
-      console.log('Form submitted:', formData);
+    if (Object.keys(newErrors).length > 0) return;
+
+    setIsLoading(true);
+    setApiError('');
+    try {
+      const response = await fetch(`${API_BASE}/api/contact/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          phone: formData.phone,
+          email: formData.email || undefined,
+          message: formData.message || undefined,
+          projectType: formData.projectType || undefined,
+          budget: formData.budget || undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || `เกิดข้อผิดพลาด (${response.status})`);
+      }
+
       setSubmitted(true);
       setFormData({ name: '', phone: '', email: '', projectType: '', budget: '', message: '' });
-      setTimeout(() => setSubmitted(false), 5000);
+      setTimeout(() => setSubmitted(false), 6000);
+    } catch (err) {
+      setApiError(err.message || 'ไม่สามารถส่งข้อมูลได้ กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -87,11 +116,11 @@ const ContactPage = ({ isDark = false }) => {
       <section className="pb-20 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12">
-            
+
             {/* Contact Info */}
             <div>
               <h2 className={`text-2xl font-bold mb-8 ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('contact.infoTitle')}</h2>
-              
+
               <div className="space-y-6 mb-10">
                 <div className={`flex items-start gap-4 p-4 rounded-xl transition-shadow ${isDark ? 'bg-slate-800 hover:bg-slate-700' : 'bg-white shadow-sm hover:shadow-md'}`}>
                   <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${isDark ? 'bg-orange-500/20' : 'bg-orange-100'}`}>
@@ -120,7 +149,7 @@ const ContactPage = ({ isDark = false }) => {
                   </div>
                   <div>
                     <h3 className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('contact.lineOfficial')}</h3>
-                    <p className={isDark ? 'text-slate-400' : 'text-slate-600'}>@giftshi.official</p>
+                    <p className={isDark ? 'text-slate-400' : 'text-slate-600'}>@395fzoca</p>
                     <p className={isDark ? 'text-slate-400' : 'text-slate-600'}>@giftzapyya</p>
                   </div>
                 </div>
@@ -143,7 +172,7 @@ const ContactPage = ({ isDark = false }) => {
                   <Phone size={20} />
                   {t('contact.callNow')}
                 </a>
-                <a href="https://line.me/ti/p/@giftshi.official" target="_blank" rel="noopener noreferrer" className="flex-1 bg-green-500 text-white py-4 px-6 rounded-full font-bold text-center hover:bg-green-600 transition-colors flex items-center justify-center gap-2">
+                <a href="https://line.me/ti/p/@395fzoca" target="_blank" rel="noopener noreferrer" className="flex-1 bg-green-500 text-white py-4 px-6 rounded-full font-bold text-center hover:bg-green-600 transition-colors flex items-center justify-center gap-2">
                   <MessageCircle size={20} />
                   Line
                 </a>
@@ -153,13 +182,21 @@ const ContactPage = ({ isDark = false }) => {
             {/* Contact Form */}
             <div className={`rounded-3xl p-8 shadow-xl ${isDark ? 'bg-slate-800' : 'bg-white'}`}>
               <h2 className={`text-2xl font-bold mb-6 ${isDark ? 'text-white' : 'text-slate-900'}`}>{t('contact.formTitle')}</h2>
-              
+
               <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Success Banner */}
                 {submitted && (
                   <div className="flex items-center gap-3 p-4 rounded-xl bg-green-500/10 border border-green-500/30 text-green-500">
                     <CheckCircle size={20} />
                     <span className="font-medium text-sm">{t('contact.successMessage')}</span>
+                  </div>
+                )}
+
+                {/* API Error Banner */}
+                {apiError && (
+                  <div className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500">
+                    <AlertCircle size={20} />
+                    <span className="font-medium text-sm">{apiError}</span>
                   </div>
                 )}
 
@@ -246,12 +283,26 @@ const ContactPage = ({ isDark = false }) => {
                   />
                 </div>
 
+
                 <button
                   type="submit"
-                  className="w-full bg-linear-to-r from-orange-600 to-amber-500 text-white py-4 px-6 rounded-full font-bold hover:from-orange-700 hover:to-amber-600 transition-all transform hover:scale-[1.02] shadow-lg shadow-orange-600/30 flex items-center justify-center gap-2"
+                  disabled={isLoading}
+                  className={`w-full bg-linear-to-r from-orange-600 to-amber-500 text-white py-4 px-6 rounded-full font-bold transition-all transform shadow-lg shadow-orange-600/30 flex items-center justify-center gap-2 ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:from-orange-700 hover:to-amber-600 hover:scale-[1.02]'}`}
                 >
-                  <Send size={20} />
-                  {t('contact.submit')}
+                  {isLoading ? (
+                    <>
+                      <svg className="animate-spin w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                      </svg>
+                      กำลังส่ง...
+                    </>
+                  ) : (
+                    <>
+                      <Send size={20} />
+                      {t('contact.submit')}
+                    </>
+                  )}
                 </button>
               </form>
             </div>

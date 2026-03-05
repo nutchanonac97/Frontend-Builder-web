@@ -35,7 +35,7 @@ const FloatingContact = () => {
         >
           {/* Line Official */}
           <a
-            href="https://line.me/ti/p/@giftshi.official"
+            href="https://line.me/ti/p/@395fzoca"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-3 px-5 py-3 rounded-full bg-green-500 text-white font-bold shadow-lg shadow-green-500/30 hover:bg-green-600 hover:scale-105 transition-all text-sm whitespace-nowrap"
@@ -61,11 +61,10 @@ const FloatingContact = () => {
           e.stopPropagation();
           setIsOpen(!isOpen);
         }}
-        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-110 ${
-          isOpen
+        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:scale-110 ${isOpen
             ? 'bg-slate-700 text-white shadow-slate-700/30 rotate-0'
             : 'bg-green-500 text-white shadow-green-500/40 animate-bounce-slow'
-        }`}
+          }`}
         aria-label="Contact us"
       >
         {isOpen ? <X size={24} /> : <MessageCircle size={24} />}

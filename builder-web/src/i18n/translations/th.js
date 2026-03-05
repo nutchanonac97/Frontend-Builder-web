@@ -9,6 +9,34 @@ const th = {
     contact: 'ติดต่อเรา',
   },
 
+  // ─── Home Page ───
+  home: {
+    badge: '✨ รับสร้างบ้าน 2026',
+    title1: 'สร้างบ้าน...',
+    title2: 'ที่บ่งบอกความเป็นคุณ',
+    subtitle: 'บริการรับสร้างบ้านครบวงจร รีสอร์ท บ้านลอยน้ำ และอาคารพาณิชย์ ด้วยเทคโนโลยีทันสมัย ใส่ใจทุกรายละเอียด',
+    stats: { projects: 'โครงการ', warranty: 'ปีรับประกัน', satisfaction: 'ลูกค้าพอใจ' },
+    viewPlans: 'ดูแบบบ้าน',
+    consultUs: 'ปรึกษาเรา',
+    dragHint: '🖱️ ลากเมาส์เพื่อหมุนดูบ้าน 3D',
+    menu: {
+      housePlans: 'แบบบ้าน',
+      normalHouse: 'บ้านปกติ',
+      floatingHouse: 'บ้านลอยน้ำ',
+    },
+    panel: {
+      lineDesc: 'แอดไลน์เพื่อรับโปรโมชั่นพิเศษและปรึกษาฟรี!',
+      housesTitle: 'แบบบ้าน',
+      housesDesc: 'เลือกชมแบบบ้านที่ตรงใจคุณ',
+      residential: 'บ้านพักอาศัย',
+      commercial: 'อาคารพาณิชย์',
+      floating: 'บ้านลอยน้ำ',
+      resort: 'รีสอร์ท',
+      plansSuffix: 'แบบ',
+      viewAll: 'ดูแบบบ้านทั้งหมด',
+    },
+  },
+
   // ─── Services Page ───
   services: {
     hero: {

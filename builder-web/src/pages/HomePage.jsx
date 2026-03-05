@@ -1066,7 +1066,7 @@ const InfoPanel = ({ type, isVisible, onClose }) => {
           <p className="text-slate-600">แอดไลน์เพื่อรับโปรโมชั่นพิเศษและปรึกษาฟรี!</p>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { id: "@giftshi.official", qr: "https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://line.me/R/ti/p/@giftshi.official" },
+              { id: "@395fzoca", qr: "https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://line.me/R/ti/p/@395fzoca" },
               { id: "@giftzapyya", qr: "https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://line.me/R/ti/p/@giftzapyya" }
             ].map((line, i) => (
               <div key={i} className="text-center p-3 bg-green-50 rounded-xl">

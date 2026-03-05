@@ -9,6 +9,34 @@ const en = {
     contact: 'Contact Us',
   },
 
+  // ─── Home Page ───
+  home: {
+    badge: '✨ Home Building 2026',
+    title1: 'Build a Home...',
+    title2: 'That Defines You',
+    subtitle: 'Full-service home construction — resorts, floating houses & commercial buildings with modern technology and attention to detail',
+    stats: { projects: 'Projects', warranty: 'Yr Warranty', satisfaction: 'Satisfaction' },
+    viewPlans: 'View House Plans',
+    consultUs: 'Consult Us',
+    dragHint: '🖱️ Drag to rotate the 3D house',
+    menu: {
+      housePlans: 'House Plans',
+      normalHouse: 'Normal House',
+      floatingHouse: 'Floating House',
+    },
+    panel: {
+      lineDesc: 'Add Line to receive special promotions and free consultation!',
+      housesTitle: 'House Plans',
+      housesDesc: 'Browse house plans that match your style',
+      residential: 'Residential',
+      commercial: 'Commercial',
+      floating: 'Floating House',
+      resort: 'Resort',
+      plansSuffix: 'plans',
+      viewAll: 'View All House Plans',
+    },
+  },
+
   // ─── Services Page ───
   services: {
     hero: {
