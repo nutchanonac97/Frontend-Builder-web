@@ -1,0 +1,427 @@
+@Host = http://localhost:5213
+@TestVideoId = cIJQrqAHpZI
+@Token = YOUR_JWT_TOKEN_HERE
+
+# =================================================================
+# ⚙️ หมวด 0: System Configuration (ตั้งค่าระบบ)
+# =================================================================
+
+### 0.1 📋 ดู Config ทั้งหมด
+GET {{Host}}/api/integration-config
+Accept: application/json
+
+### 0.2 🔍 ดู Config ตาม Key
+GET {{Host}}/api/integration-config/Email:SmtpHost
+Accept: application/json
+
+### 0.3 🟢 เพิ่ม/แก้ไข Config (Upsert) - ตั้งค่า SMTP Host
+POST {{Host}}/api/integration-config
+Content-Type: application/json
+
+{
+  "configKey": "Email:SmtpHost",
+  "configValue": "smtp.gmail.com",
+  "description": "SMTP Host for Gmail"
+}
+
+### 0.4 🟢 ตั้งค่า SMTP Port
+POST {{Host}}/api/integration-config
+Content-Type: application/json
+
+{
+  "configKey": "Email:SmtpPort",
+  "configValue": "587",
+  "description": "SMTP Port"
+}
+
+### 0.5 🟢 ตั้งค่า Email ผู้ส่ง
+POST {{Host}}/api/integration-config
+Content-Type: application/json
+
+{
+  "configKey": "Email:Username",
+  "configValue": "band4869@gmail.com", 
+  "description": "Email sender address"
+}
+
+### 0.6 🟢 ตั้งค่า App Password (สำคัญ!)
+POST {{Host}}/api/integration-config
+Content-Type: application/json
+
+{
+  "configKey": "Email:Password",
+  "configValue": "cdvevrdutgusaorc", 
+  "description": "Gmail App Password"
+}
+
+### 0.7 ❌ ลบ Config
+DELETE {{Host}}/api/integration-config/Email:SmtpHost
+Accept: application/json
+
+
+### 0.12 📧 ตั้งค่า Email ผู้รับ (Admin Receiver)
+# อีเมลที่จะคอยรับแจ้งเตือนจาก Contact Form
+POST {{Host}}/api/integration-config
+Content-Type: application/json
+
+{
+  "configKey": "Email:AdminReceiver",
+  "configValue": "s65122519067@ssru.ac.th", 
+  "description": "Email address for receiving contact form notifications"
+}
+### 0.13 🔍 ดู Email ผู้รับ (Get Admin Receiver)
+GET {{Host}}/api/integration-config/Email:AdminReceiver
+Accept: application/json
+
+# =================================================================
+# 👮‍♂️ หมวด 1: Admin & Authentication (ระบบผู้ใช้)
+# =================================================================
+
+### 1.1 👑 เพิ่มสิทธิ์ Admin (ยิงครั้งเดียว)
+# เปลี่ยน email เป็นอีเมลที่คุณจะใช้ Login
+### 1.1 👑 เพิ่มสิทธิ์ Admin
+POST {{Host}}/api/auth/add-admin
+Content-Type: application/json
+
+{
+  "email": "s65122519065@ssru.ac.th"
+}
+
+### ❌ ลบ Admin (ระบุ Email)
+# ใช้ ?email=... ต่อท้าย URL
+DELETE {{Host}}/api/auth/remove-admin?email=somchai@test.com
+Accept: application/json
+
+### 1.3 📋 ดูรายชื่อ Admin
+GET {{Host}}/api/auth/list-admins
+Accept: application/json
+
+### 1.2 🟡 Google Login (โหมดทดสอบ / Mock)
+# ใช้เพื่อทดสอบว่าระบบ Admin ทำงานไหม โดยไม่ต้องมี Token จริง
+# ยิงแล้วต้องได้ Token กลับมา และ Role ต้องเป็น "Admin" (ถ้าทำข้อ 1.1 แล้ว)
+POST {{Host}}/api/auth/google-login
+Content-Type: application/json
+
+{
+  "idToken": "TEST_TOKEN"
+}
+
+### 1.3 🟡 Google Login (โหมดจริง)
+# ต้องเอา ID Token จริงมาจาก Frontend/Postman
+POST {{Host}}/api/auth/google-login
+Content-Type: application/json
+
+{
+  "idToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjEzMGZkY2VmY2M4ZWQ3YmU2YmVkZmE2ZmM4Nzk3MjIwNDBjOTJiMzgiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiI1MzIyODAzNTg3MzIta2hhNGp1ZmV0MjVtMDY5bXNqb2gxZ3VlOGxwY2FsOTYuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiI1MzIyODAzNTg3MzIta2hhNGp1ZmV0MjVtMDY5bXNqb2gxZ3VlOGxwY2FsOTYuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDgyODY3Njg3Mzc0Nzk0OTAyODQiLCJoZCI6InNzcnUuYWMudGgiLCJlbWFpbCI6InM2NTEyMjUxOTA2NUBzc3J1LmFjLnRoIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImF0X2hhc2giOiJlLXowR0lNdUF2cWgweURhWGpZejN3IiwibmFtZSI6IuC4meC4seC4iuC4iuC4suC4meC4meC4l-C5jCDguYDguK3guYnguIfguInguYnguKfguJkiLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSklRelN2ZTNsM2dTbThTUmliNzBraXZmdFl3WkNXTk96U3RkalhXTnJIazdDMVRtRT1zOTYtYyIsImdpdmVuX25hbWUiOiLguJnguLHguIrguIrguLLguJnguJnguJfguYwiLCJmYW1pbHlfbmFtZSI6IuC5gOC4reC5ieC4h-C4ieC5ieC4p-C4mSIsImlhdCI6MTc2NjIwMDc2NSwiZXhwIjoxNzY2MjA0MzY1fQ.iZADNGIS408lbtc3r9fb3LgUrT3nmdVHbF73ybVVcJPLux7azR7TX5OiZoMvAU_pB8dCoHqK7Fa1CHYYoxayiwkokVvytr6U-pp9KWMXptxYeBA4li6GhCovAVef5qhPf4KUORrvmIhS4U9FpAbDtwTp2X8rSsBpj5AehLV4CcjMBsaj5Lrw3bXMPNMhOLUsc35im12aOSVqzsauDkOFLn-rMLTur6Tg8krXLJ27Etw2UCmvMoUFr15tzgXGlbBRmo_aswyxNEkg9PxP35OP6LoFmc_JgBPC2NsOkqWeKfhCC6wdm36HhNZORiZ_M48HXcjj7DH2s_cdvueI1scFrw"
+}
+
+### 1.4 🟢 LINE Login
+POST {{Host}}/api/auth/line-login
+Content-Type: application/json
+
+{
+  "accessToken": "YOUR_LINE_ACCESS_TOKEN"
+}
+
+
+### 1.4 🚪 Logout (ออกจากระบบ)
+# หมายเหตุ: ในระบบ JWT การ Logout หลักๆ คือการลบ Token ที่ฝั่งหน้าบ้าน (Client)
+# API นี้มีไว้เพื่อเคลียร์ Cookie (ถ้าใช้) หรือเพื่อความเป็นระเบียบของระบบ
+POST {{Host}}/api/auth/logout
+Authorization: Bearer <เอา_Token_จากการ_Login_มาใส่ตรงนี้>
+Content-Type: application/json
+
+### 1.5 👤 ตรวจสอบ Profile (ต้องใส่ Token ด้านบนก่อน)
+GET {{Host}}/api/auth/profile
+Authorization: Bearer {{Token}}
+Accept: application/json
+
+
+# =================================================================
+# 📺 หมวด 2: Live Room (ควบคุมห้องเล่นเพลง)
+# =================================================================
+
+### 2.1 👁️ ดูวิดีโอที่กำลังเล่นอยู่
+GET {{Host}}/api/live-room/current-video
+Accept: application/json
+
+### 2.2 ⏭️ สั่งเปลี่ยนวิดีโอทันที
+PUT {{Host}}/api/live-room/change-video
+Content-Type: application/json
+
+{
+  "videoId": "k85mRPjqDjU",
+  "title": "Imagine Dragons - Believer"
+}
+
+### 2.3 💬 ดึงคอมเมนต์จาก YouTube
+GET {{Host}}/api/live-room/youtube-comments/{{TestVideoId}}
+Accept: application/json
+
+
+# =================================================================
+# 📜 หมวด 3: Playlist (คิวเพลง)
+# =================================================================
+
+### 3.1 📋 ดูรายการ Playlist ทั้งหมด
+GET {{Host}}/api/live-room/playlist
+Accept: application/json
+
+### 3.2 ➕ เพิ่มเพลงเข้าคิว (จาก URL)
+POST {{Host}}/api/live-room/playlist/from-url
+Content-Type: application/json
+
+{
+  "url": "https://www.youtube.com/watch?v=QPtuaBzFtPg"
+}
+
+### 3.3 ▶️ สั่งเล่นเพลงจาก Playlist ID
+POST {{Host}}/api/live-room/playlist/1/play
+Accept: application/json
+
+### 3.4 🗑️ ลบเพลงออกจาก Playlist
+DELETE {{Host}}/api/live-room/playlist/1
+Accept: application/json
+
+
+# =================================================================
+# 💾 หมวด 4: Video Library (คลังวิดีโอส่วนตัว)
+# =================================================================
+
+### 4.1 🔍 ค้นหาวิดีโอ (YouTube Search)
+GET {{Host}}/api/videos/search?query=thai%20pop%20music
+Accept: application/json
+
+### 4.2 💾 บันทึกวิดีโอเก็บเข้าคลัง
+POST {{Host}}/api/videos
+Content-Type: application/json
+
+{
+  "videoId": "{{TestVideoId}}",
+  "title": "Rick Astley - Never Gonna Give You Up",
+  "thumbnailUrl": "https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+  "description": "เพลงในตำนาน เอาไว้เทสระบบ"
+}
+
+### 4.3 📂 ดูรายการในคลัง
+GET {{Host}}/api/videos
+Accept: application/json
+
+### 4.4 ❌ ลบวิดีโอออกจากคลัง
+DELETE {{Host}}/api/videos/{{TestVideoId}}
+Accept: application/json
+
+
+# =================================================================
+# 📧 หมวด 5: Email & Contact Form
+# =================================================================
+
+### 5.1 📨 ทดสอบส่งอีเมล (Direct Send)
+# เช็ค Config ในหมวด 0 ให้ครบก่อนยิงนะครับ
+POST {{Host}}/api/email/send
+Content-Type: application/json
+
+{
+  "toEmail": "band4869@gmail.com", 
+  "subject": "Test Email System",
+  "body": "<h1>System Check</h1><p>Email service is working correctly.</p>",
+  "isHtml": true
+}
+
+### 5.2 📝 ฟอร์มติดต่อเรา (Contact Form - เก่า via AuthController)
+POST {{Host}}/api/auth/contact-submit
+Content-Type: application/json
+
+{
+  "name": "คุณสมชาย ทดสอบระบบ",
+  "email": "somchai@example.com",
+  "Phone": "0805859329",
+  "message": "สนใจบริการ System Integration ครับ"
+}
+
+### 5.3 📝 ฟอร์มติดต่อเรา (ใหม่ - ครบทุก field)
+# ✅ ตัวนี้คือ API ที่ builder-web ใช้จริง (ContactController)
+# รองรับ projectType และ budget ที่ frontend ส่งมา
+POST {{Host}}/api/contact/send
+Content-Type: application/json
+
+{
+  "name": "คุณสมชาย ทดสอบระบบ",
+  "email": "somchai@example.com",
+  "phone": "0805859329",
+  "message": "สนใจบริการ System Integration ครับ",
+  "projectType": "website",
+  "budget": "50k-100k"
+}
+
+### 5.4 📝 ฟอร์มติดต่อเรา (field น้อยสุด - เฉพาะ name + phone)
+# ทดสอบว่า field ที่ optional ไม่ส่งก็ไม่ error
+POST {{Host}}/api/contact/send
+Content-Type: application/json
+
+{
+  "name": "คุณวิไล ทดสอบ",
+  "phone": "0912345678"
+}
+
+### 5.5 ❌ ฟอร์มติดต่อเรา (ขาด field บังคับ - ต้อง 400)
+# ทดสอบว่าถ้าไม่กรอกชื่อ/เบอร์ ต้อง return 400 Bad Request
+POST {{Host}}/api/contact/send
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "message": "ไม่มีชื่อและเบอร์"
+}
+
+### 3.2 📋 ดึงรายชื่อคนติดต่อ (ทั้งหมด)
+# เรียงจากล่าสุด -> เก่าสุด
+GET {{Host}}/api/contact/logs
+Accept: application/json
+
+### 3.3 🔍 ค้นหา (Search)
+# ค้นหาจาก ชื่อ, เบอร์ หรือ อีเมล (เช่นคำว่า "สมชาย" หรือ "089")
+GET {{Host}}/api/contact/logs?search=สมชาย
+Accept: application/json
+
+### 3.4 📄 แบ่งหน้า (Pagination)
+# ตัวอย่าง: ขอหน้า 1, เอามาแค่ 5 รายการ
+GET {{Host}}/api/contact/logs?page=1&pageSize=5
+Accept: application/json
+
+### 3.5 🗑️ ลบรายการ
+# ⚠️ สำคัญ: ต้องเอา ID (GUID) ที่ได้จากข้อ 3.2 มาแทนที่ตรง <ID_จาก_DATABASE>
+DELETE {{Host}}/api/contact/logs/<ID_จาก_DATABASE>
+Accept: application/json
+
+
+
+# =================================================================
+# 🤖 หมวด 6: AI Services (Groq)
+# =================================================================
+
+### 6.1 🧠 ทดสอบ Chat AI
+POST https://api.groq.com/openai/v1/chat/completions
+Authorization: Bearer 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
+Content-Type: application/json
+
+{
+  "model": "llama-3.3-70b-versatile",
+  "messages": [
+    { "role": "user", "content": "สวัสดี AI แนะนำตัวหน่อย" }
+  ]
+}
+
+### 1. ดู Prompt ปัจจุบัน
+GET {{Host}}/api/settings/system-prompt
+Accept: application/json
+
+### 2. แก้ไข Prompt (เปลี่ยนข้อความใน "newPrompt" ได้เลย)
+POST {{Host}}/api/settings/system-prompt
+Content-Type: application/json
+
+{
+  "newPrompt": "คุณคือ AI Assistant และที่ปรึกษาด้านไอทีประจำ 'Toptech Inter' (ดำเนินงานโดย บริษัท คริสตัล บริดจ์ จำกัด)
+
+        หน้าที่ของคุณคือ: ให้คำปรึกษา แนะนำโซลูชันซอฟต์แวร์ และตอบคำถามลูกค้าที่สนใจจ้างเขียนโปรแกรมหรือทำแอปพลิเคชัน
+
+
+
+        บุคลิกและน้ำเสียง (Tone & Voice):
+
+        - **ใช้น้ำเสียงที่ผ่อนคลาย เป็นกันเอง เหมือนคุยกับเพื่อนที่ปรึกษา (Friendly & Relaxing)**
+
+        - **ต้องใส่ Emoji ประกอบข้อความเสมอ (เช่น 😊, 🙏, ✨, 💡, 🚀) เพื่อให้ลูกค้าไม่เครียด**
+
+        - ทันสมัย มีความรู้ด้านไอที (Tech-savvy) แต่อธิบายให้เข้าใจง่าย
+
+        - เป็นมืออาชีพ น่าเชื่อถือ (Professional & Reliable)
+
+        - ให้บริการ 24 ชั่วโมง (ตามจุดขายของบริษัท)
+
+
+
+        ข้อมูลบริษัท (Company Profile):
+
+        - ชื่อแบรนด์: Toptech Inter
+
+        - นิติบุคคล: บริษัท คริสตัล บริดจ์ จำกัด (Crystal Bridge Co., Ltd.)
+
+        - ที่ตั้ง: 354 ซอยสุขสวัสดิ์ 26 แขวงบางปะกอก เขตราษฎร์บูรณะ กทม. 10140
+
+        - จุดเด่น: รับเขียนโปรแกรมตามความต้องการ (Custom Software), รองรับทั้ง Web & Mobile, ดูแลตลอด 24 ชม.
+
+
+
+        บริการหลัก (Services & Solutions):
+
+        1. Platform: Web Application, Mobile App (Android/iOS)
+
+        2. Business Systems:
+
+        - ระบบจัดซื้อ (Procurement)
+
+        - ระบบสนับสนุนงานขาย (Sales Support)
+
+        - ระบบบัญชี (Accounting)
+
+        - ระบบคลังสินค้า (Inventory/WMS)
+
+        - ระบบวางแผนการผลิต (Production Planning)
+
+        - ระบบจัดส่งสินค้า (Logistics)
+
+        - ระบบบริหารบุคคล (HR)
+
+        - ระบบ Supply Chain
+
+        3. Advanced Tech: RPA (ระบบอัตโนมัติ), IoT (Internet of Things)
+
+        4. ภาษาที่เชี่ยวชาญ: C++, HTML/CSS, Java, Python
+
+        5. IT Services: ดูแลระบบ Network, Server, Firewall, Backup ข้อมูล
+
+
+
+        ช่องทางติดต่อ (Contact Info):
+
+        - โทร: 083-892-4659, 097-248-1259 (ติดต่อได้ 24 ชม.)
+
+        - Line ID: cb24659
+
+        - Email: crystalbridge.co.th@gmail.com
+
+        - Website: Toptech-Inter.com
+
+        - Google Map: ค้นหา Crystal Bridge Co., Ltd.
+
+
+
+        แนวทางการตอบคำถาม (Guidelines):
+
+        1. การวิเคราะห์ความต้องการ: ห้ามบอกราคาโดดๆ ให้ถามกลับเพื่อประเมินสโคปงาน เช่น 'ลูกค้าต้องการระบบสำหรับธุรกิจประเภทไหนครับ? 😊'
+
+        2. การขายเชิงที่ปรึกษา: นำเสนอว่าระบบของเราจะช่วยลดต้นทุน หรือเพิ่มกำไรให้ลูกค้าได้อย่างไร
+
+        3. การปิดการขาย: พยายามขอเบอร์โทร หรือไลน์ เพื่อให้ Developer/PM ติดต่อกลับไปประเมินราคา
+
+        4. ห้ามประเมินราคาฟันธงในแชททันที ให้แจ้งว่า 'ขอทราบรายละเอียดเบื้องต้นเพื่อประเมินราคาที่คุ้มค่าที่สุดให้นะครับ 🙏'
+
+        5. หากลูกค้าถามตรงๆ เรื่องราคา ให้ตอบว่า 'ราคาขึ้นกับสโคปงานครับ รบกวนขอรายละเอียดเพิ่มเติมหน่อยนะครับ 😊'
+        6. หากลูกค้าถามว่าบริษัทมีบริการอะไรบ้าง ให้สรุปบริการหลัก พร้อมเชิญชวนเลือกจากเมนู
+        7. หากลูกค้าไม่ตอบกลับเกิน 5 นาที ให้ส่งข้อความกระตุ้นความสนใจ เช่น 'มีอะไรที่ผมช่วยได้นะครับ 😊' หรือ 'ยังรอฟังความต้องการอยู่นะครับ 
+        🙏'
+        8. หากลูกค้าถามนอกเหนือจากบริการ ให้ตอบกลับอย่างสุภาพว่า 'ขออภัยครับ ผมเป็น AI ผู้ช่วยด้านบริการไอทีของ Toptech Inter เท่านั้นครับ 😊'
+        9.ลูกค้าถามเกียวกับงานบริการอื่นๆให้ลูกค้าโทรสอบถามโดยตรงที่เบอร์ 083-892-4659 หรือ 097-248-1259
+        10.หากจบการสนทนา ให้ปิดด้วยประโยคเชิญชวนอย่างนุ่มนวล
+        11.การตอบให้เว้นบรรทัด หรือ Paragraph เพื่อให้อ่านง่าย
+        12.ห้ามตอบเนื้อหานอกจาก บริการหลัก (Services & Solutions)เด็ดขาด 
+        13.ห้ามแนะนำบริการอื่นที่ไม่ใช่ของ Toptech Interเด็ดขาด
+        14.ห้ามตอบมั่วหรือเติมแต่งเด็ดขาด ไม่รู้ให้บอกไม่ทราบเท่านั้น และ แนะนำให้ติดต่อทางโทรศัพท์แทน
+
+        ตัวอย่างประโยคจบการสนทนา:
+
+        - 'หากมีไอเดียโปรเจกต์ ปรึกษาเราได้ 24 ชม. เลยนะครับ โทร 083-892-4659 📞'
+
+        - 'สนใจให้เราเข้าไปนำเสนอระบบ หรือ Demo แจ้งได้เลยนะครับ ✨'"
+}
