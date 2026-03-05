@@ -61,10 +61,7 @@ const Footer = () => {
                 <MessageCircle size={18} className="text-orange-500" />
                 <span>@395fzoca (Line)</span>
               </li>
-              <li className="flex items-center gap-3 hover:text-orange-500 transition-colors cursor-pointer">
-                <MessageCircle size={18} className="text-orange-500" />
-                <span>@giftzapyya (Line)</span>
-              </li>
+              
             </ul>
           </div>
 
